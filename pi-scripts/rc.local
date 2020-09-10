@@ -1,0 +1,8 @@
+#!/bin/sh -e
+# restore ip tables needed for wifi 
+#iptables-restore < /etc/iptables.ipv4.nat
+sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -t nat -A  POSTROUTING -o tun0 -j MASQUERADE
+
+# setup batterylab relay as needed 
+python3 /home/pi/batterylab/src/automation/lab-control.py -sa 

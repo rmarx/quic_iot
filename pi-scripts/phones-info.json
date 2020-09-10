@@ -1,0 +1,15 @@
+[{
+		"node": "pi-iotlab",
+		"type": "regular",
+		"name": "Nokia1",
+		"wifi": "2.4Ghz",
+		"adb_identifier": "PLEGAR27B0806931",
+		"ip": "192.168.4.4",
+		"screen_res": "480x854",
+		"voltage": "4.0",
+		"gpio_pin": "-",
+		"os": "android",
+		"channel": "ch3",
+		"mac_address": "20:39:56:61:61:27"
+	}
+]

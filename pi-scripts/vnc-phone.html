@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <!--
+    Author: Matteo Varvello (varvello@brave.com)
+    Inspired by lightweight example using minimal UI and features from Joel Martin and  Samuel Mannehed for Cendio AB
+    -->
+
+    <title>BATTERYLAB</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Icons (see Makefile for what the sizes are for) -->
+    <link rel="icon" sizes="16x16" type="image/png" href="app/images/icons/novnc-16x16.png">
+    <link rel="icon" sizes="24x24" type="image/png" href="app/images/icons/novnc-24x24.png">
+    <link rel="icon" sizes="32x32" type="image/png" href="app/images/icons/novnc-32x32.png">
+    <link rel="icon" sizes="48x48" type="image/png" href="app/images/icons/novnc-48x48.png">
+    <link rel="icon" sizes="60x60" type="image/png" href="app/images/icons/novnc-60x60.png">
+    <link rel="icon" sizes="64x64" type="image/png" href="app/images/icons/novnc-64x64.png">
+    <link rel="icon" sizes="72x72" type="image/png" href="app/images/icons/novnc-72x72.png">
+    <link rel="icon" sizes="76x76" type="image/png" href="app/images/icons/novnc-76x76.png">
+    <link rel="icon" sizes="96x96" type="image/png" href="app/images/icons/novnc-96x96.png">
+    <link rel="icon" sizes="120x120" type="image/png" href="app/images/icons/novnc-120x120.png">
+    <link rel="icon" sizes="144x144" type="image/png" href="app/images/icons/novnc-144x144.png">
+    <link rel="icon" sizes="152x152" type="image/png" href="app/images/icons/novnc-152x152.png">
+    <link rel="icon" sizes="192x192" type="image/png" href="app/images/icons/novnc-192x192.png">
+    <!-- Firefox currently mishandles SVG, see #1419039
+    <link rel="icon" sizes="any" type="image/svg+xml" href="app/images/icons/novnc-icon.svg">
+    -->
+    <!-- Repeated last so that legacy handling will pick this -->
+    <link rel="icon" sizes="16x16" type="image/png" href="app/images/icons/novnc-16x16.png">
+
+    <!-- Apple iOS Safari settings -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Home Screen Icons (favourites and bookmarks use the normal icons) -->
+    <link rel="apple-touch-icon" sizes="60x60" type="image/png" href="app/images/icons/novnc-60x60.png">
+    <link rel="apple-touch-icon" sizes="76x76" type="image/png" href="app/images/icons/novnc-76x76.png">
+    <link rel="apple-touch-icon" sizes="120x120" type="image/png" href="app/images/icons/novnc-120x120.png">
+    <link rel="apple-touch-icon" sizes="152x152" type="image/png" href="app/images/icons/novnc-152x152.png">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/phone.css">
+    <link rel="stylesheet" href="./css/control-bar.css">
+
+     <!--
+    <script type='text/javascript'
+        src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
+    -->
+
+    <!-- promise polyfills promises for IE11 -->
+    <script src="vendor/promise.js"></script>
+    <!-- ES2015/ES6 modules polyfill -->
+    <script type="module">
+        window._noVNC_has_module_support = true;
+    </script>
+    <script>
+        window.addEventListener("load", function() {
+            if (window._noVNC_has_module_support) return;
+            var loader = document.createElement("script");
+            loader.src = "vendor/browser-es-module-loader/dist/browser-es-module-loader.js";
+            document.head.appendChild(loader);
+        });
+    </script>
+
+	<! -- jquery --> 
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+    
+	<!-- actual script modules -->
+    <script type="module" crossorigin="anonymous">
+        // Load supporting scripts
+        import * as WebUtil from './app/webutil.js';
+        import RFB from './core/rfb.js';
+
+        var rfb;
+        var desktopName;
+
+        function updateDesktopName(e) {
+            desktopName = e.detail.name;
+        }
+        function credentials(e) {
+            rfb.sendCredentials({ password: '!BatteryLab2019!' });			 
+        }
+        function setPassword() {
+            rfb.sendCredentials({ password: document.getElementById('password_input').value });
+            return false;
+        }
+        function sendCtrlAltDel() {
+            rfb.sendCtrlAltDel();
+            return false;
+        }
+        function machineShutdown() {
+            rfb.machineShutdown();
+            return false;
+        }
+        function machineReboot() {
+            rfb.machineReboot();
+            return false;
+        }
+        function machineReset() {
+            rfb.machineReset();
+            return false;
+        }
+        function status(text, level) {
+            switch (level) {
+                case 'normal':
+                case 'warn':
+                case 'error':
+                    break;
+                default:
+                    level = "warn";
+            }
+            document.getElementById('noVNC_status_bar').className = "noVNC_status_" + level;
+            document.getElementById('noVNC_status').textContent = text;
+        }
+        
+		// Sending data in JSON format using POST method
+		function sendPost(command, device){
+			var fields = window.location.href.split(':');
+			// FIXME -- the port might be dynamic too
+			var base_url = fields[0] + ":" + fields[1] + ':8080'
+			$.ajax({
+				type: 'POST',
+				url: base_url + "/command",
+                data: JSON.stringify({command, device}),
+				error: function(e) {
+					console.log(e);
+				},
+				//dataType: "string",
+				contentType: "application/json", 
+				error: function(e) {
+					console.log('POST response status: ERROR!')
+					console.log(e);
+				},
+				success: function(msg){ 
+					console.log('SUCCESS POST - ' + msg)
+					if (msg.includes("ERROR") || msg.includes("running")) {
+						window.alert(msg);
+                    } else if (msg.includes("REFRESH")){
+                        window.location.reload(true);
+                    }
+				}
+			});
+		}
+
+		// Sending data in JSON format using POST method
+		function sendPostBlocking(command){
+			var result = false;
+            var fields = window.location.href.split(':');
+            // FIXME -- the port might be dynamic too
+            var base_url = fields[0] + ":" + fields[1] + ':8080'
+            
+			$.ajax({
+				url: base_url + "/command",
+                type: 'POST',
+				async: false,
+				cache: false,
+				timeout: 10000,
+				data: JSON.stringify({command}),
+				//dataType: "json",
+				contentType: "application/json", 
+				error: function(e) {
+					console.log('POST response status: ERROR!')
+					console.log(e);
+				},
+				success: function(msg){ 
+					console.log('POST response status: SUCCESS!')
+					console.log(msg)
+					console.log(typeof(msg))
+					result = msg 
+					}
+      	 	});
+			return result; 
+	   }
+
+        function connected(e) {
+			// dictionary of currently available buttons 
+			var button_coords = {}; 
+            var device = '5200eb945bbb25e7';
+
+            // update device info -- FIXME 
+            var device_status = sendPostBlocking('connection_status', device)
+            console.log(device_status)
+
+
+            //document.getElementById('sendCtrlAltDelButton').disabled = false;
+            if (WebUtil.getConfigVar('encrypt',
+                                     (window.location.protocol === "https:"))) {
+                //status("Connected (encrypted) to " + desktopName, "normal");
+                status("Connected");
+            } else {
+                //status("Connected (unencrypted) to " + desktopName, "normal");
+                status("Connected");
+            }
+
+
+            // STATUS button (need to get a response)
+            var status_btn = document.createElement("button");
+            var msg = '';
+            if (device_status.includes('battery')){
+                status_btn.className = "fa fa-battery-full fa-2x"; 
+                msg = 'Battery to monsoon switch requested. Press OK and wait for auto-refresh.'
+            } else if (device_status.includes('monsoon')){
+                status_btn.className = "fa fa-tachometer fa-2x"; 
+                msg = 'Monsoon to battery switch requested. Press OK and wait for auto-refresh.'
+            } else { 
+                status_btn.className = "fa fa-warning fa-2x";
+            }
+            status_btn.addEventListener ("click", function() {
+                sendPost('safe_switch', device)
+                // FIXME -- add a timeout? 
+                window.alert(msg);            
+            });
+            
+			// MONITOR button
+			var start_btn = document.createElement("button");
+			start_btn.innerHTML = "MONITOR";
+			start_btn.className = "button-bar"; 
+			//start_btn.className = "button-circle button-A";
+			start_btn.addEventListener ("click", function() {
+				sendPost('start_monsoon', device)
+			});
+ 
+            // separation element in GUI -- no button (FIXME)
+            var pipe = document.createElement("i");
+            pipe.className = "fa fa-fire fa-2x"; 
+
+			/* STOP button
+			var stop_btn = document.createElement("button"); 
+			stop_btn.innerHTML = "STOP";
+            stop_btn.className = "button-bar"; 
+            /*            
+            stop_btn.className = "button-circle-large"
+			var ii = document.createElement("i"); 
+			ii.className = "fas fa-stop-circle"
+			stop_btn.appendChild(ii)
+            stop_btn.addEventListener ("click", function() {
+				sendPost('stop_monsoon', device)
+			});
+            */
+            
+
+            // BACK button
+            var back_btn = document.createElement("button");
+            back_btn.innerHTML = "BACK";
+            back_btn.className = "button-bar";
+            //back_btn.className = "button-circle button-B";
+            back_btn.addEventListener ("click", function() {
+                sendPost('back_phone', device)
+            });
+			
+			// HOME BUTTON
+			var home_btn = document.createElement("button"); 
+            home_btn.innerHTML = "HOME";
+            home_btn.className = "button-bar";
+			/*home_btn.className = "btn"
+			var ii = document.createElement("i"); 
+			ii.className = "fa fa-home"
+			home_btn.appendChild(ii)
+            */
+			home_btn.addEventListener ("click", function() {
+				sendPost('home_phone', device)
+			});
+
+            // HOME BUTTON
+            var wake_btn = document.createElement("button"); 
+            wake_btn.innerHTML = "ON/OFF";
+            wake_btn.className = "button-bar";
+            wake_btn.appendChild(document.createElement ("span"));
+            wake_btn.addEventListener ("click", function() {
+                sendPost('wake_phone', device)
+            });
+
+            // SWITCH PHONE BUTTON
+            var switch_btn = document.createElement("button"); 
+            switch_btn.innerHTML = "SWITCH";
+            switch_btn.className = "button-bar";
+            switch_btn.appendChild(document.createElement ("span"));
+            switch_btn.addEventListener ("click", function() {
+                //sendPost('switch_phone', device)
+                window.alert("Temporarily disabled!");   
+            });
+
+			// SWITCH PHONE BUTTON
+            var close_all_btn = document.createElement("button"); 
+            close_all_btn.innerHTML = "CLOSE";
+            close_all_btn.className = "button-bar";
+            close_all_btn.appendChild(document.createElement ("span"));
+            close_all_btn.addEventListener ("click", function() {
+                sendPost('close_all', device)
+            });
+
+            // bypass status() because it sets text content
+            document.getElementById('noVNC_status_bar').setAttribute("class", "noVNC_status_warn");
+            document.getElementById('noVNC_status').innerHTML = '';
+            document.getElementById('noVNC_status').appendChild(status_btn);
+            document.getElementById('noVNC_status').appendChild(start_btn);
+            document.getElementById('noVNC_status').appendChild(pipe);
+            //document.getElementById('noVNC_status').appendChild(stop_btn);
+            document.getElementById('noVNC_status').appendChild(back_btn);
+            document.getElementById('noVNC_status').appendChild(home_btn);
+            document.getElementById('noVNC_status').appendChild(wake_btn);
+            document.getElementById('noVNC_status').appendChild(switch_btn);
+            document.getElementById('noVNC_status').appendChild(close_all_btn);
+        }
+
+        function disconnected(e) {
+            //document.getElementById('sendCtrlAltDelButton').disabled = true;
+            updatePowerButtons();
+            if (e.detail.clean) {
+                status("Disconnected", "normal");
+            } else {
+                status("Something went wrong, connection is closed", "error");
+            }
+        }
+
+        function updatePowerButtons() {
+            var powerbuttons;
+            powerbuttons = document.getElementById('noVNC_power_buttons');
+            if (rfb.capabilities.power) {
+                powerbuttons.className= "noVNC_shown";
+            } else {
+                powerbuttons.className = "noVNC_hidden";
+            }
+        }
+
+        /*
+		document.getElementById('sendCtrlAltDelButton').onclick = sendCtrlAltDel;
+        document.getElementById('machineShutdownButton').onclick = machineShutdown;
+        document.getElementById('machineRebootButton').onclick = machineReboot;
+        document.getElementById('machineResetButton').onclick = machineReset;
+		*/ 
+        WebUtil.init_logging(WebUtil.getConfigVar('logging', 'warn'));
+        document.title = WebUtil.getConfigVar('title', 'noVNC');
+        // By default, use the host and port of server that served this file
+        var host = WebUtil.getConfigVar('host', window.location.hostname);
+        var port = WebUtil.getConfigVar('port', window.location.port);
+
+        // if port == 80 (or 443) then it won't be present and should be
+        // set manually
+        if (!port) {
+            if (window.location.protocol.substring(0,5) == 'https') {
+                port = 443;
+            }
+            else if (window.location.protocol.substring(0,4) == 'http') {
+                port = 80;
+            }
+        }
+
+        var password = WebUtil.getConfigVar('password', '');
+		var path = WebUtil.getConfigVar('path', 'websockify');
+
+        // If a token variable is passed in, set the parameter in a cookie.
+        // This is used by nova-novncproxy.
+        var token = WebUtil.getConfigVar('token', null);
+        if (token) {
+            // if token is already present in the path we should use it
+            path = WebUtil.injectParamIfMissing(path, "token", token);
+
+            WebUtil.createCookie('token', token, 1)
+        }
+
+        (function() {
+
+            status("Connecting", "normal");
+
+            if ((!host) || (!port)) {
+                status('Must specify host and port in URL', 'error');
+            }
+
+            var url;
+
+            if (WebUtil.getConfigVar('encrypt',
+                                     (window.location.protocol === "https:"))) {
+                url = 'wss';
+            } else {
+                url = 'ws';
+            }
+
+            url += '://' + host;
+            if(port) {
+                url += ':' + port;
+            }
+            url += '/' + path;
+
+            rfb = new RFB(document.body, url,
+                          { repeaterID: WebUtil.getConfigVar('repeaterID', ''),
+                            shared: WebUtil.getConfigVar('shared', true),
+                            credentials: { password: password } });
+            rfb.viewOnly = WebUtil.getConfigVar('view_only', false);
+            //rfb.viewOnly = WebUtil.getConfigVar('view_only', true);
+            rfb.addEventListener("connect",  connected);
+            rfb.addEventListener("disconnect", disconnected);
+            rfb.addEventListener("capabilities", function () { updatePowerButtons(); });
+            rfb.addEventListener("credentialsrequired", credentials);
+            rfb.addEventListener("desktopname", updateDesktopName);
+            rfb.scaleViewport = WebUtil.getConfigVar('scale', false);
+            rfb.resizeSession = WebUtil.getConfigVar('resize', false);
+        })();
+    </script>
+</head>
+
+<body>
+  <div id="noVNC_status_bar">
+    <div id="noVNC_left_dummy_elem"></div>
+    <div id="noVNC_status">Loading</div>
+    <div id="noVNC_buttons">
+    <!--     
+     <input type=button value="Send CtrlAltDel"
+             id="sendCtrlAltDelButton" class="noVNC_shown"> 
+      <span id="noVNC_power_buttons" class="noVNC_hidden">
+        <input type=button value="Shut[5~down"
+               id="machineShutdownButton">
+        <input type=button value="Reboot"
+               id="machineRebootButton">
+        <input type=button value="Reset"
+               id="machineResetButton">
+-->
+      </span>
+    </div>
+  </div>
+</body>
+</html>
