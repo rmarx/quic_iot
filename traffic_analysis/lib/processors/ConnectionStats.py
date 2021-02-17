@@ -181,6 +181,11 @@ class HandshakeTracker:
 
             tls_records = self.extractRecords( packet["layers"]["tls"] )
 
+            # extractRecords can identify an ssl connection, but doesn't have IP, so have to correct that here:
+            if self.tlsVersion == "SSLv2":
+                self.tlsVersion = {}
+                self.tlsVersion[src_ip] = ["SSLv2"]
+
             # print("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
             # # print( json.dumps(tls_records) )
             # print( len(tls_records) )
@@ -201,7 +206,7 @@ class HandshakeTracker:
                     elif len(record) == 1 and "tls.record.version" in record and record["tls.record.version"] == "0x00000002":
                         # the full record is just {"tls.record.version": "0x00000002"}
                         # this indicates SSLv2, which we don't support
-                        self.tlsVersion = "SSLv2"
+                        self.tlsVersion[src_ip] = ["SSLv2"]
                         continue
                     else:
                         print("ConnectionStats:HandshakeTracker : no tls.record.content_type in record!")
