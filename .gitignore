@@ -1,1 +1,3 @@
-venv
+traffic_analysis/venv
+.vscode/
+__pycache__/
