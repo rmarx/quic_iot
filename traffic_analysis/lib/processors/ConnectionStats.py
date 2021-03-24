@@ -5,22 +5,6 @@ import json
 
 from lib.models.Connection import Connection
 
-# class DurationTracker:
-#     def __init__(self):
-#         self.earliest = 0
-#         self.latest = 0
-    
-#     def update(self, connection, packet):
-#         if self.earliest == 0:
-#             self.earliest = float(packet["layers"]["frame"]["frame.time_epoch"])
-#         else:
-#             self.latest = float(packet["layers"]["frame"]["frame.time_epoch"])
-
-#     def serialize(self, output):
-#         output["starttime"] = self.earliest
-#         output["endtime"] = self.latest
-#         output["duration"] = self.latest - self.earliest
-
 class TLSRecordType(Enum):
     CHANGE_CIPHER_SPEC = 20
     ALERT = 21
@@ -186,11 +170,6 @@ class HandshakeTracker:
                 self.tlsVersion = {}
                 self.tlsVersion[src_ip] = ["SSLv2"]
 
-            # print("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-            # # print( json.dumps(tls_records) )
-            # print( len(tls_records) )
-            # print("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP")
-
             for record in tls_records:
                 if len(record) == 0: # for some reason, sometimes the TLS entry is just an empty dict. len() lets us check for that
                     print("ConnectionStats:HandshakeTracker : empty tls record!")
@@ -296,10 +275,6 @@ class HandshakeTracker:
                                 print("RESUMED SESSION FOUND!")
                                 self.resumedSession = True
                             # some stacks set a 0-length session-id when not resuming... because logic, so just ignore that case
-                            # else:
-                            #     print("ConnectionStats:HandshakeTracker : Session id set, but 0-length... strange")
-                            #     print( json.dumps(handshake_record) )
-                            #     raise Exception("ConnectionStats:HandshakeTracker : Session id set, but 0-length... strange")
 
                         for key in handshake_record:
                             # "Extension: supported_versions (len=7)":{
@@ -369,169 +344,6 @@ class HandshakeTracker:
                     recordInfo.length = int(record["tls.record.length"])
 
                     self.tlsRecords[src_ip].append( recordInfo.toJSON() )
-
-
-
-                # if "tls.record_content_type" in entry:
-                #     # tls_tls_record_content_type
-                #     # tls_tls_record_version
-                #     # tls_tls_record_length
-
-
-                #     # for some strange reason, sometimes wireshark has an array per field instead of just an array of full records under TLS
-                #     # so it's 'tls_tls_record_content_type': ['23', '23'], 'tls_tls_record_length_raw': ['0001', '0028'], etc. 
-                #     # I have no idea why this happens sometimes instead of having a tls_entries list... 
-                #     # so we have to manually split these cases into separate entries and then process them
-                #     real_tls_entries = []
-                    
-                #     reference_field_name = "tls_tls_record_length"
-
-                #     if isinstance(entry[reference_field_name], (list, tuple)):
-
-                #         # we use tls_tls_record_length because that seems one of the fields that consistently has this problem
-                #         # previously we used tls_tls_record_content_type, but that's less stable apparently
-                #         real_tls_entries = [{} for x in range(len(entry[reference_field_name]))] # prepare N new entry dicts where N is the amount of values for this key
-
-                #         # print( len(entry["tls_tls_record_content_type"]) )
-                #         # print( real_tls_entries )
-
-                #         # print("/////////////////////////")
-                #         # print( entry )
-                #         # print("/////////////////////////")
-
-                #         for key in entry: 
-
-                #             # for some fields, wireshark is inconsistent
-                #             # for example, when one TCP packet contains TLS server hello, change cipher spec, server handshake data
-                #             # some fields are split out across the three, while others are just reflected by a single value
-                #             # this is for example true for the details of the extensions in the Server Hello, but also ws.expert info for the change cipher spec for example
-                #             # it doesn't seem possible to properly demux these from the wireshark JSON/XML output, as they are all just logged at the top level instead of nested
-                #             # (strangely though in wireshark itself it properly assigns fields to correct records... must be problems with textual output, but nothing we can do about that)
-                #             # Making matters worse, sometimes the exceptions aren't just flat values, but arrays themselves... 
-                #             # (e.g., x509if_x509if_RDNSequence_item_raw (a list of many bytestrings in a given certificate) is just logged as top level item, because logic...)
-                #             # we would have to create manual lists of what to demux manually to do this properly
-                #             # for now, just split things out if possible. If not, just default to assigning to the first item
-
-                #             # round 2: we discover that sometimes you can have one value for tls_tls_record_content_type (e.g., 22) but sub-values for tls_handshake_type
-                #             # in other words: there records are not split out at the top level but -are- split at the handshake level... urgh
-                #             # general wireshark logic somewhat seems to be: if value is the same, just use existing dictionary entry. The moment you detect something new, start making arrays.
-
-                #             if isinstance(entry[key], (list, tuple)):
-                #                 # it's a list, assign values to each real_tls_entry
-                #                     # key: [val0, val1] becomes
-                #                     # [0][key]: val0
-                #                     # [1][key]: val1
-                #                 for idx, val in enumerate(entry[key]):
-                #                     # check for too large. For some reason, some arrays contain less values, but should never be -more-
-                #                     if len(entry[key]) != len(entry[reference_field_name]):
-                #                         # print("ConnectionStats:HandshakeTracker : Inconsitent arrays in TLS dissection... {} : {}".format(key, entry))
-                #                         # exit()
-                #                         real_tls_entries[0][key] = entry[key]
-                #                     else:
-                #                         real_tls_entries[idx][key] = val
-                #             else:
-                #                 # it's a single value: assign to the first real_tls_entry
-                #                 real_tls_entries[0][key] = entry[key]
-
-                #         # print("--------------------------------------------------")
-                #         # print( real_tls_entries )
-                #         # print("--------------------------------------------------")
-
-                #         # for record_type in entry["tls_tls_record_content_type"]:
-                #         #     if int(record_type) != TLSRecordType.APPLICATION_DATA.value:
-                #         #         print("ConnectionStats:HandshakeTracker : Multiple non-Appdata record types, unexpected! {} in {} : {}".format(record_type, entry["tls_tls_record_content_type"], entry))
-                #         #         # exit()
-                #     else:
-                #         real_tls_entries.append(entry)
-                    
-                #     for entry in real_tls_entries:
-                #         print(".////////////////")
-                #         print( entry["tls_tls_record_content_type"] )
-                #         print( entry )
-                #         print(".////////////////")
-                #         record_type = int(entry["tls_tls_record_content_type"])
-
-                #         if record_type == TLSRecordType.HANDSHAKE.value:
-                #             # handshake_type is sometimes missing due to the reasons outline above (only logged once instead of e.g., 2-3 times even for multiple records)
-                #             if "tls_tls_handshake_type" in entry:
-                #                 handshake_type = entry["tls_tls_handshake_type"]
-
-                #                 # sometimes wireshark splits handshake records at the top level, sometimes it doesn't... go figure
-                #                 # so if we have multiple here, 
-                #                 real_handshake_types = []
-
-                #                 if isinstance(handshake_type, (list, tuple)):
-                #                     # print("ConnectionStats:HandshakeTracker : Multiple Handshake types, unexpected! {} : {}".format(handshake_type, entry))
-                #                     # raise Exception("Record with multiple handshake types")
-                #                     real_handshake_types = handshake_type
-                #                 else:
-                #                     real_handshake_types.append( handshake_type )
-
-                #                 for handshake_type in real_handshake_types:
-                #                     # TODO: split this out into client hello, server hello, certificate, key exchange, etc.
-                #                     # also clearly show TLS version (still need to figure out how wireshark logs proper 1.3 though...)
-                #                     # also check for session resumption (check with tls_tls_handshake_session_id_length > 0)
-                #                     # Not all traces have this, since most use session resumption (who knew!)
-                #                     # example moniotr/iot-data/uk/echoplus/volume/2019-05-04_16:24:02.22s.pcap (search for tls.handshake.certificate_length)
-
-                #                     # TODO: figure out if there is a trace where we have client-side certificates (no idea how to even identify this though)
-
-                #                     # TODO: check for CERTIFICATE_VERIFY or CERTIFICATE_REQUEST, which is non-default behaviour we should check out later
-                                    
-                #                     print( entry )
-
-                #                     recordInfo = TLSRecordInfo()
-                #                     recordInfo.time = time
-                #                     recordInfo.record_type = TLSRecordType.HANDSHAKE.name
-                #                     recordInfo.handshake_type = TLSHandshakeType(int(handshake_type)).name
-
-                #                     print("-------------------")
-                #                     print( entry["tls_tls_record_length"] )
-                #                     # print( real_tls_entries )
-                #                     print("-------------------")
-
-                #                     recordInfo.length = int(entry["tls_tls_record_length"])
-
-                #                     self.tlsRecords[src_ip].append( recordInfo )
-
-                #                     print("ConnectionStats:HandshakeTracker : Handshake type found {}".format(TLSHandshakeType(int(handshake_type)).name))
-
-                #                     if "tls_tls_handshake_extensions_alpn_len" in entry and int(entry["tls_tls_handshake_extensions_alpn_len"]) > 0:
-                #                         self.ALPNs[src_ip].append( entry["tls_tls_handshake_extensions_alpn_str"] )
-
-                #                     # TODO: check for version with tls_tls_handshake_extensions_supported_version (if present, probably TLS 1.3, else look at tls_tls_record_version)
-
-
-                #             # if "tls_tls_handshake_session_id_length" in entry:
-                #             #     if int(entry["tls_tls_handshake_session_id_length"]) > 0:
-                #             #         print("RESUMED SESSION BABY!")
-
-                #         elif record_type == TLSRecordType.APPLICATION_DATA.value: 
-
-                #             # only want to log the first APP_DATA for each sender (all normal traffic is APP_DATA after all, so we'd log everything otherwise)
-                #             # so check if the last one added for each sender isn't already APP_DATA
-                #             if len(self.tlsRecords[src_ip]) > 0 and self.tlsRecords[src_ip][-1].record_type is not TLSRecordType.APPLICATION_DATA.value:
-                #                 recordInfo = TLSRecordInfo()
-                #                 recordInfo.time = time
-                #                 recordInfo.record_type = TLSRecordType.APPLICATION_DATA.name
-                #                 recordInfo.length = int(entry["tls_tls_record_length"])
-
-                #                 self.tlsRecords[src_ip].append( recordInfo )
-
-                #                 self.applicationDataCount += 1
-
-                #         elif record_type == TLSRecordType.ALERT.value: 
-                #             recordInfo = TLSRecordInfo()
-                #             recordInfo.time = time
-                #             recordInfo.record_type = TLSRecordType.ALERT.name
-                #             recordInfo.length = int(entry["tls_tls_record_length"])
-
-                #             self.alertRecords.append( packet )
-                # else:
-                #     # tls entry without record sometimes happens if e.g., we have a TCP spurious retransmit
-                #     if "text" not in entry or entry["text"] != "Ignored Unknown Record":    
-                #         print("ConnectionStats:HandshakeTracker : tls entry had no record type... SHOULDN'T HAPPEN? {} in {}".format(entry, packet))
-                #         raise Exception("TLS record without record type")
         
         if "ssl" in packet["layers"]:
             # note: apparently SSLv2 shows up as {"tls.record.version": "0x00000002"} for some reason
@@ -566,10 +378,6 @@ class RetransmissionTracker:
 
     def update(self, connection, packet):
         if "tcp" in packet["layers"]:
-
-            # if packet["layers"]["frame"]["frame.number"] == "87":
-            #     print( json.dumps(packet["layers"]["tcp"]) )
-            #     raise Exception("SPURIOUS IS IN HERE")
 
             # data is in long path : packet["layers"]["tcp"]["tcp.analysis"]["tcp.analysis.flags"]["_ws.expert"]["tcp.analysis.spurious_retransmission"]
             if "tcp.analysis" in packet["layers"]["tcp"]:
@@ -607,8 +415,6 @@ class RetransmissionTracker:
                                 break
 
     def serialize(self, output):
-        # if len(self.retransmissions) > 0:
-        #     print( "RETRANSMISSIONS FOUND {}".format(len(self.retransmissions)) )
         # TODO: we could expose the real types and maybe timings, seq nrs and sizes eventually, but for now this is probably ok
         output["retransmission_count"] = len(self.retransmissions)
 
@@ -628,6 +434,13 @@ class PacketCounter:
             self.packetCounts[src_ip] = 0
             self.byteCounts[src_ip] = 0
 
+        # TODO: DEBUG: REMOVE!
+        if src_ip == "192.168.0.5":
+            dst_ip = packet["layers"]["ip"]['ip.dst']
+            if dst_ip == "239.255.255.250":
+                print("Saw a packet to 239.255.255.250: {}".format(packet["layers"]["frame"]["frame.number"]))
+
+
         self.packetCounts[src_ip] += 1
         self.byteCounts[src_ip] += int( packet["layers"]["frame"]["frame.len"] )
 
@@ -636,18 +449,6 @@ class PacketCounter:
         output["total_byte_count"] = self.totalByteCount
         output["byte_counts"] = self.byteCounts
         output["packet_counts"] = self.packetCounts
-
-# class LongestIdlePeriodCounter:
-#     def __init__(self):
-#         self.longestIdlePeriod = -1
-    
-#     def update(self, connection, packet):
-#         print("ConnectionEstablishedTracker:LongestIdlePeriodCounter : NOT IMPLEMENTED")
-
-#         # TODO: wireshark analyses TCP and indicates if a packet is a Keep-Alive one in the expert info 
-
-#     def serialize(self, output):
-#         output["longest_idle"] = self.packetCount
 
 # TODO: potentially add a rolling RTT calculator (correlate TCP seq nrs with acks) -> will be noisy though, make sure we need it first 
 
@@ -711,12 +512,6 @@ class ConnectionEstablishedTracker:
                 self.receivetime = float(packet["layers"]["frame"]["frame.time_epoch"])
                 self.initial_rtt = self.receivetime - self.sendtime
 
-            # elif self.packet2 is None:
-            #     print("////////////////////")
-            #     print("////////// DEBUG: Two UDP packets from the same direction seen {} -> {}".format(self.packet1["layers"]["ip"]['ip.src'], packet["layers"]["ip"]['ip.src']))
-            #     print("////////////////////")
-            #     exit()
-
         if "quic" in packet["layers"]:
             print("ConnectionEstablishedTracker:update : QUIC connection tracking not yet implemented")
 
@@ -725,7 +520,6 @@ class ConnectionEstablishedTracker:
             output["connection_established"] = True
             if self.initial_rtt > 0:
                 output["initial_RTT"] = self.initial_rtt * 1000 # it is in seconds, we want it in milliseconds
-                # print("DEBUG: initial_rtt {}".format(self.initial_rtt * 1000))
         else:
             output["connection_established"] = False
 
@@ -775,8 +569,6 @@ class ActivityTracker:
 
             if ( time - self.lastTimestamp[src_ip] > self.threshold ): # more than 1 second difference between packets
 
-                # print( "NEW INTERVAL FOUND {} -> {}".format(self.lastTimestamp[src_ip], time))
-
                 self.timestamps[src_ip].append( self.lastTimestamp[src_ip] ) # close previous interval
                 self.timestamps[src_ip].append( time ) # open next interval
                 # if consistent keepalives, the intervals' start and end times will be the same
@@ -803,25 +595,6 @@ class ActivityTracker:
                 self.packetcounts[ip].append(self.countAccumulator[ip])
 
             for ip in self.timestamps:
-                # DEBUG: REMOVE: 
-                # if len(self.timestamps[ip]) > 8:
-                #     print( json.dumps(self.timestamps) )
-                #     # print( json.dumps(self.lastTimestamp) )
-                #     print( json.dumps(self.datasizes) )
-                #     # print( json.dumps(self.dataAccumulator) )
-                #     print( self.tcpstreamDEBUG )
-                #     raise Exception("TODO:REMOVE: TimeStampTracker:serialize : connection with large intervals found!")
-
-                # for i in range(1, len(self.datasizes[ip]) ):
-                #     if ( self.datasizes[ip][i] > 1000 ): # first interval is typically large, but looking for big intermediates here 
-                #         print( json.dumps(self.timestamps) )
-                #         # print( json.dumps(self.lastTimestamp) )
-                #         print( json.dumps(self.datasizes) )
-                #         # print( json.dumps(self.dataAccumulator) )
-                #         print( json.dumps(self.packetcounts) )
-                #         print( self.tcpstreamDEBUG )
-                #         raise Exception("TODO:REMOVE: TimeStampTracker:serialize : BIG intermediate interval found!")
-
                 # sanity check
                 if len(self.datasizes[ip]) > 0 and ( len(self.timestamps[ip]) % 2 != 0 or len(self.datasizes[ip]) != len(self.timestamps[ip]) / 2): # if there was just a single packet, it's normal that there's just a single entry
                     print( "TODO:REMOVE: TimeStampTracker:serialize: non-even amount of timestamps recorded... should not happen!" )
@@ -877,9 +650,6 @@ class RTTTracker:
             for ip in self.RTTs:
                 medians[ ip ] = statistics.median( self.RTTs[ ip ] )
             output["median_ack_latencies"] = medians
-            # # print( "Median latency : {}, spotcheck: {}".format(output["median_ack_latency"], self.RTTs[:20] ) )
-            # print( self.RTTs )
-            # print( "{} -> {}".format( output["initial_RTT"] if "initial_RTT" in output else "?", output["median_ack_latencies"] ) )
 
 class ConnectionCloseType(Enum):
     NONE = 1,
@@ -900,11 +670,6 @@ class ConnectionClosedTracker:
                 self.closed = ConnectionCloseType.FORCED
             elif packet["layers"]["tcp"].get("tcp.flags.fin", False): 
                 self.closed = ConnectionCloseType.GRACEFUL
-
-        # if self.closed is not ConnectionCloseType.NONE:
-        #     print("Connection close found")
-        #     print( packet )
-        #     exit()
 
     def serialize(self, output):
         output["connection_closed"] = self.closed is not ConnectionCloseType.NONE

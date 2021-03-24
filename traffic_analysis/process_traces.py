@@ -104,10 +104,10 @@ def main():
     
     parser.add_argument("-i", dest="input_dir", default="/home/robin/datasets/yourthings")
     parser.add_argument("-d", dest="device_list_path", default="/home/robin/datasets/yourthings/devices.json")
-    # parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0000.1523422800") # small one at 76MB
+    parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0000.1523422800") # small one at 76MB # takes about 40s
     # parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.2020.1523496000") # medium one at 181 MB # takes about 1 minute
-    parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0055.1523426100") # big one at 227MB # takes about 1.5 minutes
-    # parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0410.1523437800") # biggest one at 345 MB
+    # parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0055.1523426100") # big one at 227MB # takes about 1.5 minutes
+    # parser.add_argument("-l", dest="experiment_list", default="11/eth1-20180411.0410.1523437800") # biggest one at 345 MB # takes about 2 minutes
      
     
 

@@ -155,7 +155,7 @@ class TraceProcessor:
 
                 deviceMap[ device.name ].append( connection )
             else:
-                print("TraceProcessor: ERROR: no device found for connection! {} {} {}".format(connection, connection.mac1, connection.mac2) )
+                print("TraceProcessor: WARNING: no device found for connection! logging as unknown. {} {} {}".format(connection, connection.mac1, connection.mac2) )
                 
                 if "unknown" not in deviceMap:
                     deviceMap[ "unknown" ] = []
