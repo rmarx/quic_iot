@@ -1,0 +1,18 @@
+package:/data/app/~~eMsRhf_Qsqm7dtF3rVe0zQ==/com.google.android.apps.chromecast.app-aXRx6cKZBkw22kPbDWQ43Q==/base.apk=com.google.android.apps.chromecast.app
+[./tester.sh][1624391527]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391531]	 [CLOSE_ALL] Pressing HOME
+[./tester.sh][1624391532]	 Testing node connect to WiFI: IoTLab
+[./tester.sh][1624391532]	 Launching google...
+  bash arg: -p
+  bash arg: com.google.android.apps.chromecast.app
+  bash arg: 1
+args: [-p, com.google.android.apps.chromecast.app, 1]
+ arg: "-p"
+ arg: "com.google.android.apps.chromecast.app"
+ arg: "1"
+data="com.google.android.apps.chromecast.app"
+Events injected: 1
+## Network stats: elapsed time=15ms (0ms mobile, 0ms wifi, 15ms not connected)
+Turning some music on Google
+[./tester.sh][1624391549]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391553]	 [CLOSE_ALL] Pressing HOME

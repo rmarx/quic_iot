@@ -1,0 +1,19 @@
+package:/data/app/~~12r3ymFw0VYJgYFXTwS4MA==/com.hualai-kXp2UrOmY-MLGpMHzAcnCQ==/base.apk=com.hualai
+[./tester.sh][1624391393]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391397]	 [CLOSE_ALL] Pressing HOME
+[./tester.sh][1624391398]	 Testing node connect to WiFI: IoTLab
+[./tester.sh][1624391398]	 Launching wyze...
+  bash arg: -p
+  bash arg: com.hualai
+  bash arg: 1
+args: [-p, com.hualai, 1]
+ arg: "-p"
+ arg: "com.hualai"
+ arg: "1"
+data="com.hualai"
+Events injected: 1
+## Network stats: elapsed time=32ms (0ms mobile, 0ms wifi, 32ms not connected)
+Getting access to video feed
+Getting out of video feed
+[./tester.sh][1624391429]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391433]	 [CLOSE_ALL] Pressing HOME

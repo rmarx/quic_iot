@@ -1,0 +1,18 @@
+package:/data/app/~~8_ORGfQacZi7Kz7dF76AIA==/com.amazon.dee.app-fLjdGj9Zy6u6MrhGF9QBOQ==/base.apk=com.amazon.dee.app
+[./tester.sh][1624391868]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391872]	 [CLOSE_ALL] Pressing HOME
+[./tester.sh][1624391873]	 Testing node connect to WiFI: IoTLab
+[./tester.sh][1624391873]	 Launching alexa...
+  bash arg: -p
+  bash arg: com.amazon.dee.app
+  bash arg: 1
+args: [-p, com.amazon.dee.app, 1]
+ arg: "-p"
+ arg: "com.amazon.dee.app"
+ arg: "1"
+data="com.amazon.dee.app"
+Events injected: 1
+## Network stats: elapsed time=28ms (0ms mobile, 0ms wifi, 28ms not connected)
+Turning some music on Alexa
+[./tester.sh][1624391896]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624391900]	 [CLOSE_ALL] Pressing HOME

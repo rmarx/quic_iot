@@ -1,0 +1,13 @@
+package:/data/app/~~xNgq5RJ7JF3wUH51PdD0RQ==/com.tuya.smartlife-0ZSJbD8mp_1bTBUTLUEPCw==/base.apk=com.tuya.smartlife
+[./tester.sh][1624388963]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624388967]	 [CLOSE_ALL] Pressing HOME
+[./tester.sh][1624388968]	 Testing node connect to WiFI: IoTLab
+[./tester.sh][1624388968]	 Launching smartlife...
+  bash arg: -p
+  bash arg: com.tuya.smartlife
+  bash arg: 1
+Events injected: 1
+## Network stats: elapsed time=12ms (0ms mobile, 0ms wifi, 12ms not connected)
+Turnin socket either ON or OFF
+[./tester.sh][1624388984]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624388988]	 [CLOSE_ALL] Pressing HOME

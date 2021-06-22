@@ -1,0 +1,13 @@
+package:/data/app/~~SstJUGfg3zyWKylUz6U16A==/com.samsung.android.oneconnect-MQ372NIxFzvJtd8zop22HQ==/base.apk=com.samsung.android.oneconnect
+[./tester.sh][1624389011]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624389015]	 [CLOSE_ALL] Pressing HOME
+[./tester.sh][1624389016]	 Testing node connect to WiFI: IoTLab
+[./tester.sh][1624389016]	 Launching smartthings...
+  bash arg: -p
+  bash arg: com.samsung.android.oneconnect
+  bash arg: 1
+Events injected: 1
+## Network stats: elapsed time=19ms (0ms mobile, 0ms wifi, 19ms not connected)
+Turnin socket either ON or OFF
+[./tester.sh][1624389032]	 [CLOSE_ALL] Closing all pending applications for device: SM-G973U1
+[./tester.sh][1624389036]	 [CLOSE_ALL] Pressing HOME
