@@ -71,18 +71,20 @@ vpn_off(){
 # script usage
 usage(){
     echo "==========================================================================================="
-    echo "USAGE: $0 -i/--id, --vpn, -d/--dur"
+    echo "USAGE: $0 -i/--id, --vpn, -d/--dur, --pcap"
     echo "==========================================================================================="
     echo "-i/--id         test identifier to be used" 
     echo "--vpn           flag to control if to use a VPN" 
+    echo "--pcap          flag to control pcap collection at the pi"
     echo "-d, --dur       duration, time spent within a command"
     echo "==========================================================================================="
     exit -1
 }
 
 # general parameters
-duration=10                              # default test duration before leaving the call
-test_id=`date +%s`                       # unique test identifier 
+duration=10                # default test duration before leaving the call
+test_id=`date +%s`        # unique test identifier 
+pcap="false"              # default do not collect traffic
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -97,6 +99,9 @@ do
         --vpn)
             shift; use_vpn="true"; location="$1"; shift; 
 			;;
+        --pcap)
+            shift; pcap="true"; location="$1"; shift; 
+			;;
         -*)
             echo "ERROR: Unknown option $1"
             usage
@@ -105,12 +110,20 @@ do
 done
 
 
+# collect pcap if requested
+if [ $pcap == "true" ] 
+then 
+	echo "[$0][`date +%s`] Started PCAP collection"
+	(sudo tcpdump -i wlan0 -w $test_id.pcap &)
+fi 
+
 # external loop 
 echo "[$0][`date +%s`] TestID: $test_id" 
 num_run=1
-target_runs=1
+target_runs=8
 #APP_LIST=( "wyze" "smartlife" "alexa" "google" "smartthings" )
-APP_LIST=( "alexa" "google" )
+APP_LIST=( "wyze" "smartlife" "alexa" "google" )
+use_random="true"
 while [ $num_run -le $target_runs ] 
 do 
 	# iterate on app to be tested 
@@ -120,6 +133,12 @@ do
 		res_folder="./results/${id}"
 		mkdir -p $res_folder 
 		clean_file ".launched" 
+		if [ $use_random == "true" ] 
+		then 
+			random_duration=`echo $((5 + $RANDOM % 30))`
+			echo "[$0][`date +%s`] Random duration: $random_duration" 
+			duration=$random_duration 
+		fi 
 		echo "[$0][`date +%s`] ./tester.sh -a $app -i $id -d $duration"
 		(./tester.sh -a $app -i $id -d $duration > $res_folder"/log.txt" 2>&1 &)
 		ready="false" 
@@ -145,7 +164,19 @@ do
 			ans=$?
 		done
 		echo "[$0][`date +%s`] $app has completed" 
+		if [ $use_random == "true" ] 
+		then 
+			random_sleep=`echo $((60 + $RANDOM % 600))`
+			echo "[$0][`date +%s`] Random sleep: $random_sleep" 
+			sleep $random_sleep 
+		fi 
 	done
 	let "num_run++" 
 done
 
+# cleanup 
+if [ $pcap == "true" ] 
+then 
+	sudo killall tcpdump
+	echo "[$0][`date +%s`] Stopped PCAP collection"
+fi 

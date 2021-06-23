@@ -114,7 +114,7 @@ close_all
 
 # check for right wifi connection
 SSID=`adb -s $device_id shell dumpsys netstats | grep -E 'iface=wlan.*networkId' | head -n 1  | awk '{split($4, A,"="); split(A[2], B, ","); gsub("\"", "",  B[1]); print B[1]}'`
-myprint "Testing node connect to WiFI: $SSID"
+myprint "WiFI: $SSID"
 
 # cleanup logcat
 for pid in `ps aux | grep "adb" | grep "logcat"  | awk '{print $2}'`; do  kill -9 $pid; done
@@ -122,7 +122,7 @@ adb -s $device_id logcat -c
 
 # start app 
 t_launch=`date +%s` 
-myprint "Launching $app..."
+echo "[$0][$app][`date +%s`] LAUNCHED"
 adb -s $device_id shell monkey -p $package 1
 touch ".launched" # singal that app was launched 
 
@@ -132,36 +132,39 @@ sleep 5
 # execute command 
 if [ $app == "wyze" ] 
 then 
-	echo "Getting access to video feed" 
+	echo "[$0][$app][`date +%s`] Getting access to video feed" 
 	tap_screen 540 719
 	sleep $duration 
-	echo "Getting out of video feed" 
+	echo "[$0][$app][`date +%s`] Getting out of video feed" 
 	tap_screen 60 167
 elif [ $app == "smartlife" ]  
 then
-	echo "Turnin socket either ON or OFF"
+	echo "[$0][$app][`date +%s`] Turning smart plug either ON or OFF"
 	tap_screen 937 651
 	sleep $duration 
 elif [ $app == "alexa" ] 
 then 	
-	echo "Turning some music on Alexa" 
+	echo "[$0][$app][`date +%s`] Turning music on" 
 	tap_screen 543 2080 1
 	tap_screen 209 491 1
 	tap_screen 540 2016 1
 	sleep $duration 
+	echo "[$0][$app][`date +%s`] Turning music off" 
 	tap_screen 880 1960 1
 elif [ $app == "google" ] 
 then 	
-	echo "Turning some music on Google"
+	echo "[$0][$app][`date +%s`] Turning music on" 
 	tap_screen 280 1414
 	sleep $duration 
+	echo "[$0][$app][`date +%s`] Turning music on" 
 	tap_screen 280 1414
 elif [ $app == "smartthings" ] 
 then
-	echo "Turnin socket either ON or OFF"
+	echo "[$0][$app][`date +%s`] Turning smart plug either ON or OFF"
 	tap_screen 454 1375
 	sleep $duration 
 fi 
 
 # close all pending apps
 close_all
+echo "[$0][$app][`date +%s`] CLOSED"
