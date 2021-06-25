@@ -20,6 +20,16 @@ base_dir=$curr_dir
 adb_file=$base_dir"/adb-utils.sh"
 load_file $adb_file
 
+# cleanup - make sure nothign is running 
+cleanup(){
+	command="sudo killall tcpdump"
+	ssh -o StrictHostKeyChecking=no -p 12345 $iot_proxy "$command"
+	echo "[$0][`date +%s`] Stopped PCAP collection"
+	command="killall python3"
+	ssh -o StrictHostKeyChecking=no -p 12345 $iot_proxy "$command"
+	echo "[$0][`date +%s`] Stopped QUIC+ML server" 
+}
+
 keep_ssh(){
 	myprint "Adding rules to keep SSH alive despite the VPN"
 	sudo ip rule add from $(ip route get 1 | grep -Po '(?<=src )(\S+)') table 128
@@ -71,20 +81,30 @@ vpn_off(){
 # script usage
 usage(){
     echo "==========================================================================================="
-    echo "USAGE: $0 -i/--id, --vpn, -d/--dur, --pcap"
+    echo "USAGE: $0 -i/--id, --vpn, -d/--dur, --pcap, --lan, --clean"
     echo "==========================================================================================="
     echo "-i/--id         test identifier to be used" 
     echo "--vpn           flag to control if to use a VPN" 
     echo "--pcap          flag to control pcap collection at the pi"
+    echo "--quic          use quic" 
+    echo "--rand          use random duration and sleeps" 
+    echo "--lan           use LAN comm to IoT proxy" 
+    echo "--clean         only stop processes at IoT proxy and leave" 
     echo "-d, --dur       duration, time spent within a command"
     echo "==========================================================================================="
     exit -1
 }
 
 # general parameters
-duration=10                # default test duration before leaving the call
-test_id=`date +%s`        # unique test identifier 
-pcap="false"              # default do not collect traffic
+duration=20                     # default test duration before leaving the call
+test_id=`date +%s`              # unique test identifier 
+pcap="false"                    # default do not collect traffic
+iot_proxy="iot.batterylab.dev"  # address of iot proxy 
+iot_port="7352"                 # port to be used 
+use_quic="false"                # by default no quic is used 
+use_random="false"              # by default no random durations or sleeps
+clean_only="false" 
+use_lan="false"
 
 # read input parameters
 while [ "$#" -gt 0 ]
@@ -100,7 +120,22 @@ do
             shift; use_vpn="true"; location="$1"; shift; 
 			;;
         --pcap)
-            shift; pcap="true"; location="$1"; shift; 
+            shift; pcap="true";  
+			;;
+        --quic)
+            shift; use_quic="true";  
+			;;
+        --rand)
+            shift; use_random="true";  
+			;;
+        --clean)
+            shift; clean_only="true";  
+			;;
+        --lan)
+            shift;
+			iot_proxy="192.168.1.246" 
+			use_lan="true"
+			echo "Switching to internal comm with IoT proxy"
 			;;
         -*)
             echo "ERROR: Unknown option $1"
@@ -109,51 +144,78 @@ do
     esac
 done
 
+# logging 
+echo "Using IoT proxy: $iot_proxy:$iot_port"
+
+# cleanup - make sure nothing is running 
+cleanup
+if [ $clean_only == "true" ] 
+then 
+	echo "Cleanup done" 
+	exit -1 
+fi 
+ 
+# start quic server-side component 
+if [ $use_quic == "true" ] 
+then 
+	echo "[$0][`echo $(($(date +%s%N)/1000000))`] Starting IoT proxy (QUIC+ML)"
+	if [ $use_lan == "true" ] 
+	then 
+		ip_iot_proxy=$iot_proxy
+	else 
+		ip_iot_proxy=`dig $iot_proxy | grep "ANSWER SECTION" -A 1 | grep -v ANSWER | awk '{print $NF}'`
+	fi 
+	command="cd /home/pi/quic/aioquic && python3 -u examples/fiat_server.py --certificate tests/ssl_cert.pem --private-key tests/ssl_key.pem --port $iot_port --fiat-log logs/fiat_server_$test_id.log --preprocess 0 > logs/outlog_$test_id 2>&1"
+	ssh -o StrictHostKeyChecking=no -p 12345 $iot_proxy "$command" & 
+fi 
 
 # collect pcap if requested
 if [ $pcap == "true" ] 
 then 
-	echo "[$0][`date +%s`] Started PCAP collection"
-	(sudo tcpdump -i wlan0 -w $test_id.pcap &)
+	echo "[$0][`echo $(($(date +%s%N)/1000000))`] Started PCAP collection"
+	command="cd /home/pi/quic_iot/android/pcaps &&	sudo tcpdump -i wlan0 -w $test_id.pcap > /dev/null 2>&1"
+	ssh  -o StrictHostKeyChecking=no -p 12345 $iot_proxy "$command" & 
 fi 
 
 # external loop 
-echo "[$0][`date +%s`] TestID: $test_id" 
+echo "[$0][`echo $(($(date +%s%N)/1000000))`] TestID: $test_id" 
 num_run=1
-target_runs=8
+target_runs=5
 #APP_LIST=( "wyze" "smartlife" "alexa" "google" "smartthings" )
 APP_LIST=( "wyze" "smartlife" "alexa" "google" )
-use_random="true"
+#APP_LIST=( "alexa" )
 while [ $num_run -le $target_runs ] 
 do 
 	# iterate on app to be tested 
 	for app in "${APP_LIST[@]}"
 	do
 		id=$test_id"/"$app"/"$num_run
-		res_folder="./results/${id}"
+		res_folder=`pwd`"/results/${id}"
 		mkdir -p $res_folder 
-		clean_file ".launched" 
+
+		# start reporting to IoT proxy via QUIC (use sync in there) 
+		launch_file=`pwd`"/.launched"
+		clean_file $launch_file
+		if [ $use_quic == "true" ] 
+		then 
+			cd 	/home/pi/quic_iot/aioquic
+			echo "[$0][`echo $(($(date +%s%N)/1000000))`] Launching fiat_client.py" 
+			(python3 -u examples/fiat_client.py --ca-certs tests/pycacert.pem https://$ip_iot_proxy:$iot_port/ --fiat-log $res_folder/fiat_client_$test_id.log --preprocess 0  --ready $launch_file --zero-rtt > $res_folder/outlog_$test_id 2>&1 &) 
+			cd - > /dev/null 2>&1 
+		fi 
+	
+		# launch the app 
 		if [ $use_random == "true" ] 
 		then 
 			random_duration=`echo $((5 + $RANDOM % 30))`
-			echo "[$0][`date +%s`] Random duration: $random_duration" 
+			echo "[$0][`echo $(($(date +%s%N)/1000000))`] Random duration: $random_duration" 
 			duration=$random_duration 
 		fi 
-		echo "[$0][`date +%s`] ./tester.sh -a $app -i $id -d $duration"
+		echo "[$0][`echo $(($(date +%s%N)/1000000))`] ./tester.sh -a $app -i $id -d $duration"
 		(./tester.sh -a $app -i $id -d $duration > $res_folder"/log.txt" 2>&1 &)
-		ready="false" 
-		while [ $ready == "false" ] 
-		do 
-			if [ -f ".launched" ] 
-			then 
-				ready="true" 
-			else 
-				sleep 0.1
-			fi 
-		done
-		# TODO: start reporting to IoT proxy via QUIC 
+		
 		# wait for experiment to end 
-		echo "[$0][`date +%s`] $app was launched. Waiting for it to complete..."
+		echo "[$0][`echo $(($(date +%s%N)/1000000))`] $app was launched. Waiting for it to complete..."
 		sleep $duration 
 		ps aux | grep tester | grep -v "grep" > /dev/null
 		ans=$?
@@ -163,20 +225,28 @@ do
 			ps aux | grep tester | grep -v "grep" > /dev/null
 			ans=$?
 		done
-		echo "[$0][`date +%s`] $app has completed" 
+		echo "[$0][`echo $(($(date +%s%N)/1000000))`] $app has completed" 
+
+		# stop the quic client 
+		if [ $use_quic == "true" ] 
+		then 
+			killall python3
+			echo "[$0][`echo $(($(date +%s%N)/1000000))`] Stopped QUIC client" 
+		fi 
+
+		# sleep in between apps
 		if [ $use_random == "true" ] 
 		then 
 			random_sleep=`echo $((60 + $RANDOM % 600))`
-			echo "[$0][`date +%s`] Random sleep: $random_sleep" 
+			echo "[$0][`echo $(($(date +%s%N)/1000000))`] Random sleep: $random_sleep sec" 
 			sleep $random_sleep 
-		fi 
+		else 
+			echo "[$0][`echo $(($(date +%s%N)/1000000))`] Sleep between devices: 30 sec" 
+			sleep 30 
+		fi  
 	done
 	let "num_run++" 
 done
 
-# cleanup 
-if [ $pcap == "true" ] 
-then 
-	sudo killall tcpdump
-	echo "[$0][`date +%s`] Stopped PCAP collection"
-fi 
+# final cleanup 
+cleanup 
