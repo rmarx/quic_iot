@@ -121,10 +121,9 @@ for pid in `ps aux | grep "adb" | grep "logcat"  | awk '{print $2}'`; do  kill -
 adb -s $device_id logcat -c 
 
 # start app 
-t_launch=`date +%s` 
-echo "[$0][$app][`date +%s`] LAUNCHED"
 adb -s $device_id shell monkey -p $package 1
 touch ".launched" # singal that app was launched 
+echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] LAUNCHED"
 
 # allow time for app to launch
 sleep 5 
@@ -132,39 +131,39 @@ sleep 5
 # execute command 
 if [ $app == "wyze" ] 
 then 
-	echo "[$0][$app][`date +%s`] Getting access to video feed" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Getting access to video feed" 
 	tap_screen 540 719
 	sleep $duration 
-	echo "[$0][$app][`date +%s`] Getting out of video feed" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Getting out of video feed" 
 	tap_screen 60 167
 elif [ $app == "smartlife" ]  
 then
-	echo "[$0][$app][`date +%s`] Turning smart plug either ON or OFF"
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning smart plug either ON or OFF"
 	tap_screen 937 651
 	sleep $duration 
 elif [ $app == "alexa" ] 
 then 	
-	echo "[$0][$app][`date +%s`] Turning music on" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning music on" 
 	tap_screen 543 2080 1
 	tap_screen 209 491 1
 	tap_screen 540 2016 1
 	sleep $duration 
-	echo "[$0][$app][`date +%s`] Turning music off" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning music off" 
 	tap_screen 880 1960 1
 elif [ $app == "google" ] 
 then 	
-	echo "[$0][$app][`date +%s`] Turning music on" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning music on" 
 	tap_screen 280 1414
 	sleep $duration 
-	echo "[$0][$app][`date +%s`] Turning music on" 
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning music on" 
 	tap_screen 280 1414
 elif [ $app == "smartthings" ] 
 then
-	echo "[$0][$app][`date +%s`] Turning smart plug either ON or OFF"
+	echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] Turning smart plug either ON or OFF"
 	tap_screen 454 1375
 	sleep $duration 
 fi 
 
 # close all pending apps
 close_all
-echo "[$0][$app][`date +%s`] CLOSED"
+echo "[$0][$app][`echo $(($(date +%s%N)/1000000))`] CLOSED"
