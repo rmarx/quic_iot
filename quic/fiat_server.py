@@ -30,14 +30,12 @@ except ImportError:
 
 import joblib
 import numpy as np
-import os
 
 AsgiApplication = Callable
 HttpConnection = Union[H0Connection, H3Connection]
 
 SERVER_NAME = "aioquic/" + aioquic.__version__
 
-FIAT_LOG = ''
 
 # -------------------------------- ML data preprocessing -------------------------------- #
 
@@ -114,40 +112,24 @@ class FIATHandler:
         self.data = []
         #self.clf = joblib.load('zkSENSE/ML/decisiontree7.joblib')
         self.clf = joblib.load('../zkSENSE/ML/decisiontree7.joblib')
-        self.logfile = None
-        
-    def update_logfile(self, logfile):
-        try:
-            self.logfile = open(logfile, 'a+')
-            print('open file successfully')
-        except Exception as e:
-            print(e)
 
     def new_data(self, data):
-        # print('FIATHandler.new_data', MODE)#, data)
+        print('FIATHandler.new_data', MODE, data)
         self.data.append(data)
-        if self.logfile:
-            self.logfile.write('%f data received \n' % (time.time()))
-
         if MODE == 0:
             if len(self.data) >= 1:
                 self.verify(self.data)
                 self.data = []
 
         elif MODE == 1:
-            # print('len(self.data)', len(self.data))
-            if len(self.data) >= 75:  # 250Hz * 0.3s
-                features = preprocess_data(self.data)
-                self.verify([features])
+            if len(self.data) >= 3:  # 250Hz * 0.3s
+                self.data = preprocess_data(self.data)
+                self.verify(self.data)
                 self.data = []
 
     def verify(self, X):
         ret = self.clf.predict(X)
-        print('FIATHandler.Verify!', ret, '\n')
-        if self.logfile:
-            self.logfile.write('%f FIATHandler.Verify! %d \n' % (time.time(), ret))
-            self.logfile.flush()
-            os.fsync(self.logfile)
+        print('FIATHandler.Verify!', ret, '\n\n')
 
         # cmds = ['sh', 'stop.sh']
         # print(cmds)
@@ -156,6 +138,8 @@ class FIATHandler:
         # p.kill()
         # if ans:
         #     print('IPSet.create_ipset failed!', ans)
+
+        # TODO: record
 
 
 # mode:
@@ -560,17 +544,9 @@ if __name__ == "__main__":
         default=0,
         help="decide whether pre-process the data"
     )
-    parser.add_argument(
-        "--fiat-log", 
-        type=str,
-        default='',
-        help="the log file"
-    )
     args = parser.parse_args()
 
-    MODE = int(args.preprocess)
-    FIAT_LOG = args.fiat_log
-    FIAT.update_logfile(FIAT_LOG)
+    MODE = args.preprocess
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(name)s %(message)s",

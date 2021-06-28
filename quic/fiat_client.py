@@ -41,7 +41,7 @@ HttpConnection = Union[H0Connection, H3Connection]
 
 USER_AGENT = "aioquic/" + aioquic.__version__
 
-FIAT_LOG = ''
+
 # mode:
 # 0 for pre-processing data here
 # 1 for do not process the data
@@ -136,12 +136,6 @@ class HttpClient(QuicConnectionProtocol):
         else:
             self._http = H3Connection(self._quic)
 
-        self.logfile = None
-        try:
-            self.logfile = open(FIAT_LOG, 'a+')
-        except:
-            pass
-
     async def get(self, url: str, headers: Dict = {}) -> Deque[H3Event]:
         """
         Perform a GET request.
@@ -154,9 +148,7 @@ class HttpClient(QuicConnectionProtocol):
         """
         Perform a POST request.
         """
-        print('POST request', len(data))#, data)
-        if self.logfile:
-            self.logfile.write('%f POST request sent, len=%d\n' % (time.time(), len(data)))
+        print('POST request', data)
         return await self._request(
             HttpRequest(method="POST", url=URL(url), content=data, headers=headers)
         )
@@ -247,82 +239,43 @@ class HttpClient(QuicConnectionProtocol):
 async def perform_http_request(
     client: HttpClient,
     url: str,
-    data: Union[str, list],
+    data: str,
     include: bool,
     output_dir: Optional[str],
 ) -> None:
     # perform request
-    if MODE == 0:
-        start = time.time()
-        if data is not None:
-            http_events = await client.post(
-                url,
-                data=data.encode(),
-                headers={"content-type": "application/x-www-form-urlencoded"},
-            )
-            method = "POST"
-        else:
-            http_events = await client.get(url)
-            method = "GET"
-        elapsed = time.time() - start
-
-        # print speed
-        octets = 0
-        for http_event in http_events:
-            if isinstance(http_event, DataReceived):
-                octets += len(http_event.data)
-        logger.info(
-            "Response received for %s %s : %d bytes in %.1f s (%.3f Mbps)"
-            % (method, urlparse(url).path, octets, elapsed, octets * 8 / elapsed / 1000000)
+    start = time.time()
+    if data is not None:
+        http_events = await client.post(
+            url,
+            data=data.encode(),
+            headers={"content-type": "application/x-www-form-urlencoded"},
         )
+        method = "POST"
+    else:
+        http_events = await client.get(url)
+        method = "GET"
+    elapsed = time.time() - start
 
-        # output response
-        if output_dir is not None:
-            output_path = os.path.join(
-                output_dir, os.path.basename(urlparse(url).path) or "index.html"
+    # print speed
+    octets = 0
+    for http_event in http_events:
+        if isinstance(http_event, DataReceived):
+            octets += len(http_event.data)
+    logger.info(
+        "Response received for %s %s : %d bytes in %.1f s (%.3f Mbps)"
+        % (method, urlparse(url).path, octets, elapsed, octets * 8 / elapsed / 1000000)
+    )
+
+    # output response
+    if output_dir is not None:
+        output_path = os.path.join(
+            output_dir, os.path.basename(urlparse(url).path) or "index.html"
+        )
+        with open(output_path, "wb") as output_file:
+            write_response(
+                http_events=http_events, include=include, output_file=output_file
             )
-            with open(output_path, "wb") as output_file:
-                write_response(
-                    http_events=http_events, include=include, output_file=output_file
-                )
-    elif MODE == 1:
-        i = 0
-        for da in data:
-            i += 1
-            print('%d/%d packet' % (i, len(data)))
-            time.sleep(0.004) # 250 Hz
-            start = time.time()
-            if da is not None:
-                http_events = await client.post(
-                    url,
-                    data=da.encode(),
-                    headers={"content-type": "application/x-www-form-urlencoded"},
-                )
-                method = "POST"
-            else:
-                http_events = await client.get(url)
-                method = "GET"
-            elapsed = time.time() - start
-
-            # print speed
-            octets = 0
-            for http_event in http_events:
-                if isinstance(http_event, DataReceived):
-                    octets += len(http_event.data)
-            logger.info(
-                "Response received for %s %s : %d bytes in %.1f s (%.3f Mbps)"
-                % (method, urlparse(url).path, octets, elapsed, octets * 8 / elapsed / 1000000)
-            )
-
-            # output response
-            # if output_dir is not None:
-            #     output_path = os.path.join(
-            #         output_dir, os.path.basename(urlparse(url).path) or "index.html"
-            #     )
-            #     with open(output_path, "wb") as output_file:
-            #         write_response(
-            #             http_events=http_events, include=include, output_file=output_file
-            #         )
 
 
 def process_http_pushes(
@@ -384,7 +337,7 @@ def save_session_ticket(ticket: SessionTicket) -> None:
 async def run(
     configuration: QuicConfiguration,
     urls: List[str],
-    data: Union[str, list],
+    data: str,
     include: bool,
     output_dir: Optional[str],
     local_port: int,
@@ -526,16 +479,8 @@ if __name__ == "__main__":
         default=0,
         help="decide whether pre-process the data"
     )
-    parser.add_argument(
-        "--fiat-log", 
-        type=str,
-        default='',
-        help="the log file"
-    )
 
     args = parser.parse_args()
-
-    FIAT_LOG = args.fiat_log
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -579,22 +524,18 @@ if __name__ == "__main__":
     #     print('len(data)', len(data))
     # except Exception as e:
     #     print('Read file error', data, e)
-    MODE = int(args.preprocess)
+    MODE = args.preprocess
     if MODE == 0:
         data = [random.random() for _ in range(48)]
         data = json.dumps(data)
     elif MODE == 1:
-        data = []
-        for _ in range(1000):
-            da = {
-                'UAC': [random.random() for _ in range(6)],
-                'GYR': [random.random() for _ in range(6)],
-                'ts': time.time()
-            }
-            da = json.dumps(da)
-            data.append(da)
+        data = {
+            'UAC': [random.random() for _ in range(6)],
+            'GYR': [random.random() for _ in range(6)],
+            'ts': time.time()
+        }
+        data = json.dumps(data)
 
-    print('len(data)', len(data))
     if uvloop is not None:
         uvloop.install()
     loop = asyncio.get_event_loop()
