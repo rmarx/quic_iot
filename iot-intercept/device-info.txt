@@ -1,0 +1,14 @@
+ESP_739629 192.168.1.69  60:01:94:73:96:29 "MomLight"
+ESP_73942C 192.168.1.153 60:01:94:73:94:2c "LivingRoom"
+ESP_3BD279 192.168.1.21 60:01:94:3b:d2:79 "Basement"
+GoogleHomeMini 192.168.1.183 30:fd:38:b2:90:44 "Basement"
+GoogleHome 192.168.1.254 f4:f5:d8:d9:43:4c "Kitchen"
+Chromecast-Ultra 192.168.1.177 b0:2a:43:34:40:5b
+Chromecast 192.168.1.188 54:60:09:65:ab:10
+Amazon-31f39ffa5 192.168.1.228 18:65:71:80:e9:35 "TVGym"
+HP353508 192.168.1.253 bc:e9:2f:35:35:08 "Printer"
+15AA01AC34170JMJ 192.168.1.157 18:b4:30:d2:5a:16 "ThermostatBedroom"
+15AA01AC25180DMY 192.168.1.176 64:16:66:2c:45:11 "ThermostatLR"
+new-host-5 192.168.1.170 a4:da:22:2c:4c:fd "WyzeCamBenji"
+new-host-2 192.168.1.227 2c:aa:8e:15:da:5b "WyzeCamSide"
+new-host-6 192.168.1.182 a4:da:22:38:51:a1 "WyzeCamFront"
