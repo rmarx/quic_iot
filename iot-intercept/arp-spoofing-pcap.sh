@@ -47,6 +47,7 @@ filter=""                # tcpdump filter to be used
 iface="enp5s0"           # interface to use for pcap collection 
 router="192.168.1.1"     # home router IP address 
 id=`date +%s`            # unique id for this run 
+id="1625685803"
 
 # stop all currently running if requested 
 stop_all
@@ -69,8 +70,10 @@ for device in "${!device_list[@]}"
 do 
 	ip=${device_list[$device]}
 	echo "[$0][`date`] Starting ARP spoofing for $device ($ip)"
-	(sudo arpspoof -i $iface -t $ip $router > "${res_folder}/logs/arp-${device}-1" 2>&1 &)
-	(sudo arpspoof -i $iface -t $router $ip > "${res_folder}/logs/arp-${device}-2" 2>&1 &)
+	#(sudo arpspoof -i $iface -t $ip $router > "${res_folder}/logs/arp-${device}-1" 2>&1 &)
+	(sudo arpspoof -i $iface -t $ip $router > /dev/null 2>&1 &)
+	#(sudo arpspoof -i $iface -t $router $ip > "${res_folder}/logs/arp-${device}-2" 2>&1 &)
+	(sudo arpspoof -i $iface -t $router $ip > /dev/null 2>&1 &)
 done 
 
 # start pcap collection 	
@@ -82,9 +85,4 @@ then
 fi 
 filter=$filter" and not arp" 
 echo "[$0][`date`] Starting PCAP collection ($pcap_file => $filter)"
-#echo "sudo tcpdump -Z varvello -i $iface -w $pcap_file -W 48 -G 1800 -C 10 -K -n $filter"
-#sudo tcpdump -Z varvello -i $iface -w $pcap_file -W 48 -G 1800 -C 10 -K -n $filter #> "${res_folder}/logs/pcap-log" 2>&1 &
-sudo tcpdump -Z varvello -i $iface -G 3600 -w "${res_folder}/pcaps/dump-"%m-%d-%Y-%H-%M".pcap" $filter & 
-#echo "sudo tcpdump -i $iface -w $pcap_file $filter"
-#sudo tcpdump -i $iface -w $pcap_file $filter
-#sudo tcpdump -i $iface -w $pcap_file -W 48 -G 1800 -C 100 -K -n host $ip and not arp &
+sudo tcpdump -Z varvello -i $iface -G 3600 -w "${res_folder}/pcaps/dump-"%m-%d-%Y-%H-%M".pcap" $filter &  # rotate logs each our 
