@@ -134,10 +134,15 @@ for pid in `ps aux | grep "launch.sh" | grep -v "grep" | awk '{print $2}'`
 do 
 	kill -9 $pid 
 done 
+cert_path=$curr_dir"/certificate.pem"
 cd $no_vnc_path
-(./utils/launch.sh --vnc localhost:$vnc_port --listen $no_vnc_PORT > $log_folder"/noVNC-log-"$no_vnc_PORT".txt" 2>&1 &)
-#cert_path=$curr_dir"/certificate.pem"
-#(./utils/launch.sh --vnc localhost:$vnc_port --listen $no_vnc_PORT --cert $cert_path > $log_folder"/noVNC-log-"$session_id".txt" 2>&1 &)
+if [ -f $cert_path ] 
+then 
+	myprint "Using TLS" 
+	(./utils/launch.sh --vnc localhost:$vnc_port --listen $no_vnc_PORT --cert $cert_path > $log_folder"/noVNC-log-"$session_id".txt" 2>&1 &)
+else 
+	(./utils/launch.sh --vnc localhost:$vnc_port --listen $no_vnc_PORT > $log_folder"/noVNC-log-"$no_vnc_PORT".txt" 2>&1 &)
+fi 
 cd - > /dev/null 2>71 
 
 # export display 

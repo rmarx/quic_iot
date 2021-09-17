@@ -11,5 +11,48 @@
 		"os": "android",
 		"channel": "ch3",
 		"mac_address": "20:39:56:61:61:27"
-	}
+	}, 
+	{
+		"node": "pi-iotlab",
+		"type": "regular",
+		"name": "Pixel4",
+		"wifi": "2.4Ghz",
+		"adb_identifier": "99181FFBA008L2",
+		"ip": "192.168.4.4",
+		"screen_res": "480x854",
+		"voltage": "4.0",
+		"gpio_pin": "-",
+		"os": "android",
+		"channel": "ch3",
+		"mac_address": "20:39:56:61:61:27"
+	}, 
+	{
+		"node": "pi-iotlab",
+        "type": "battor",
+        "name": "SM-J337A",
+        "wifi": "2.4Ghz",
+        "adb_identifier": "4200441ecc7b75ef",
+        "ip": "192.168.4.4",
+        "screen_res": "720x1280",
+        "voltage": "3.7",
+        "gpio_pin": "-",
+        "os": "android",
+        "channel": "ch3",
+        "mac_address": "bc:a5:8b:52:a8:44"
+    }, 
+	{
+		"node": "pi-iotlab",
+        "type": "battor",
+        "name": "SM-G973U1",
+        "wifi": "2.4Ghz",
+        "adb_identifier": "R38M20L7BMZ",
+        "ip": "192.168.4.4",
+        "screen_res": "720x1280",
+        "voltage": "3.7",
+        "gpio_pin": "-",
+        "os": "android",
+        "channel": "ch3",
+        "mac_address": "bc:a5:8b:52:a8:44"
+    }
+
 ]

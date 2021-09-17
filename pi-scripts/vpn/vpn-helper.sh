@@ -96,7 +96,7 @@ fi
 prev_ip=`curl -s https://ipinfo.io/ip`
 vpn_off
 my_ip=`curl -s https://ipinfo.io/ip`
-myprint "PreviousIP: $prev_ip Current-IP: $my_ip vpn_was_killed: $vpn_was_killed VPN-config-file: $open_vpn_file"
+myprint "PreviousIP: $prev_ip Current-IP: $my_ip vpn_was_killed: $vpn_was_killed VPN-config-file: $open_vpn_file LogFile: $log_vpn"
 if [ $vpn_was_killed == "true" ]
 then
     myprint "Sleeping $t_sleep seconds since prvious VPN config was stopped."
