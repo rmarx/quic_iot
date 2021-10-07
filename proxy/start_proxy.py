@@ -1,6 +1,5 @@
 import os
 import sys
-sys.path.append(os.getcwd() + '/..')
 import json
 import time 
 
@@ -24,7 +23,7 @@ from fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
 # 0 -> pre-processing data at Android phone
 # 1 -> receiving raw data from phone and processing mean and divation here
 FIAT_MODE = 0
-FIAT = FIATHandler(mode=FIAT_MODE)
+FIAT = FIATHandler(mode=FIAT_MODE, zksense_model='../../zkSENSE/ML/decisiontree7.joblib')
 
 # -------------------------------------- Predictor ------------------------------------- #
 
@@ -34,8 +33,11 @@ PREDICTOR = Predictor()
 
 
 if __name__ == '__main__':
+    fiat_proxy = FIATProxyService(FIAT)
+    cherrypy.tree.mount(fiat_proxy, '/', config=CP_CONF)
+    cherrypy.engine.start()
     cherrypy.config.update(server_config)
-    cherrypy.quickstart(FIATProxyService(FIAT), '/', CP_CONF)
+    # cherrypy.quickstart(FIATProxyService(FIAT), '/', CP_CONF)
 
     # devices = json.load(open(device_file, 'r'))
     devices = [
@@ -68,3 +70,6 @@ if __name__ == '__main__':
         #     drop_packet()
         # else:
         #     forward_packet()
+        time.sleep(1)
+
+    cherrypy.engine.stop()

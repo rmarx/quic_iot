@@ -8,9 +8,7 @@ import numpy as np
 
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 import sys
-sys.path.append(os.getcwd() + '/..')
 
 import joblib
 
@@ -86,7 +84,7 @@ def preprocess_data(data):
     return results
 
 class FIATHandler:
-    def __init__(self, mode, zksense_model='../zkSENSE/ML/decisiontree7.joblib'):
+    def __init__(self, mode, zksense_model='../../zkSENSE/ML/decisiontree7.joblib'):
         self.data = []
         self.mode = mode
         self.clf = joblib.load(zksense_model)
@@ -94,11 +92,12 @@ class FIATHandler:
         self.status = False # whether it is authenticated
         self.last_update_ts = time.time()
 
-    def update_status():
+    def update_status(self):
         if time.time() - self.last_update_ts > VERIFY_VALID_DURATION:
             self.status = False
 
-    def get_status():
+    def get_status(self):
+        self.update_status()
         return self.status
 
     def new_data(self, data):
@@ -127,8 +126,9 @@ class FIATHandler:
         ret = self.clf.predict(X)
         print('FIATHandler.Verify!', ret, '\n\n')
         # TODO: check the meaning of the predict return
-        if ret == False:
+        if ret == 0:
             self.status = True
+            self.last_update_ts = time.time()
 
 
 # ------------------------------------- HTTP Handler ------------------------------------ #
