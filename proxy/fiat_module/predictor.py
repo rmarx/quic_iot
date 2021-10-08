@@ -615,11 +615,11 @@ if __name__ == "__main__":
     devices = [
         {
             "name": "HomeMini", "mac": "30:fd:38:7b:62:51", "ip": "192.168.5.14", 
-            "clf": "models/HomeMini.joblib"
+            "clf": "../models/HomeMini.joblib"
         },
         {
             "name": "Wyze", "mac": "2c:aa:8e:15:da:5b", "ip": "192.168.5.15", 
-            "clf": "models/WyzeCam.joblib"
+            "clf": "../models/WyzeCam.joblib"
         }
     ]
     # try:
