@@ -19,9 +19,9 @@ import utils
 class PacketProcessor(object):
 
     def __init__(self, host_state):
-
         assert isinstance(host_state, HostState)
         self._host_state = host_state
+        self.pkt_count = 0
 
     def process_packet(self, pkt):
 
@@ -81,13 +81,17 @@ class PacketProcessor(object):
 
         if (pkt[sc.Ether].dst == self._host_state.host_mac 
             and pkt[sc.IP].dst != self._host_state.host_ip):
-            print('send spoofed packet', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, protocol, sport, dport)
+            print('received spoofed packet', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, protocol, sport, dport)
             pkt[sc.Ether].src = self._host_state.host_mac
             if pkt[sc.IP].dst in self._host_state.ip_mac_dict:
                 pkt[sc.Ether].dst = self._host_state.ip_mac_dict[pkt[sc.IP].dst]
             else:
                 pkt[sc.Ether].dst = self._host_state.ip_mac_dict[self._host_state.gateway_ip]
-            sc.sendp(pkt, iface='wlan0')
+            
+            allow = self.allow_pkt(pkt)
+            if allow:
+                sc.sendp(pkt, iface='wlan0')
+            print('decision: ', allow)
         
         # if sc.TCP in pkt:# and (pkt[sc.IP].src == '192.168.1.167' or pkt[sc.IP].dst == '192.168.1.167'):
         #     print('tcp', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, pkt[sc.TCP].sport, pkt[sc.TCP].dport)
@@ -97,6 +101,19 @@ class PacketProcessor(object):
         # DNS
         if sc.DNS in pkt:
             self._process_dns(pkt)
+
+    def allow_pkt(self, pkt):
+        self.pkt_count += 1
+
+        packet_type = self._host_state.predictor.new_pkt(pkt, pkt_count)
+        print('packet_type', packet_type)
+        fiat_status = self._host_state.fiat_auth.get_status()
+        print('fiat_status', fiat_status)
+
+        if packet_type == 2 and fiat_status is False:
+            return False
+        else:
+            return True
 
 
     def _process_arp(self, pkt):

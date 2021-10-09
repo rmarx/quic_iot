@@ -19,6 +19,21 @@ from syn_scan import SynScan
 import utils
 
 
+import joblib
+import cherrypy
+import random
+import json
+from cherrypy.lib.static import serve_file
+import logging
+from scapy.all import PcapReader
+
+import fiat_module.utils as fiat_utils
+from fiat_module.predictor import Predictor
+from fiat_module.fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
+
+
+
+
 WINDOWS_STARTUP_TEXT = """
 
 ======================================
@@ -43,6 +58,44 @@ def start():
     Returns the host state once all background threats are started.
     
     """
+
+
+    # ------------------------------------- FIAT Handler ------------------------------------ #
+
+    # mode:
+    # 0 -> pre-processing data at Android phone
+    # 1 -> receiving raw data from phone and processing mean and divation here
+    FIAT_MODE = 0
+    fiat_auth = FIATHandler(mode=FIAT_MODE, zksense_model='../../zkSENSE/ML/decisiontree7.joblib')
+
+    # -------------------------------------- Predictor ------------------------------------- #
+
+    PREDICTOR = Predictor()
+
+    # --------------------------------------- Main() -------------------------------------- #
+
+    fiat_proxy = FIATProxyService(fiat_auth)
+    cherrypy.tree.mount(fiat_proxy, '/', config=CP_CONF)
+    cherrypy.engine.start()
+    cherrypy.config.update(server_config)
+    # cherrypy.quickstart(FIATProxyService(FIAT), '/', CP_CONF)
+
+    # devices = json.load(open(device_file, 'r'))
+    devices = [
+        {
+            "name": "HomeMini", "mac": "30:fd:38:7b:62:51", "ip": "192.168.5.14", 
+            "clf": "models/HomeMini.joblib"
+        },
+        {
+            "name": "Wyze", "mac": "2c:aa:8e:15:da:5b", "ip": "192.168.5.15", 
+            "clf": "models/WyzeCam.joblib"
+        }
+    ]
+    for de in devices:
+        if 'type' in de:
+            continue
+        PREDICTOR.add_device(**de)
+
     # Read from home directory the user_key. If non-existent, get one from
     # cloud.
     config_dict = utils.get_user_config()
@@ -50,7 +103,7 @@ def start():
     utils.log('[MAIN] Starting.')
 
     # Set up environment
-    state = HostState()
+    state = HostState(fiat_auth, PREDICTOR)
     state.user_key = config_dict['user_key'].replace('-', '')
     state.secret_salt = config_dict['secret_salt']
     #state.host_mac = utils.get_my_mac()

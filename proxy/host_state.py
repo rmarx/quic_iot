@@ -15,7 +15,7 @@ CLIENT_VERSION = '1.0.3'
 
 class HostState(object):
 
-    def __init__(self):
+    def __init__(self, fiat_auth, predictor):
 
         self.host_ip = None
         self.host_mac = None
@@ -49,6 +49,10 @@ class HostState(object):
         self.last_ui_contact_ts = time.time()  # ts of /is_inspecting_traffic
         self.quit = False
         self.spoof_arp = True
+
+        # FIAT
+        self.fiat_auth = fiat_auth
+        self.predictor = predictor
 
         # Constantly checks for IP changes on this host
         thread = threading.Thread(target=self.update_ip_thread)

@@ -11,6 +11,7 @@ import utils
 
 
 def main():
+
     sc.load_layer("http")
     # The whole process should be run as root.
     try:
@@ -75,6 +76,7 @@ def main():
         time.sleep(1)
 
     inspector.enable_ip_forwarding()
+    cherrypy.engine.stop()
 
     utils.log('[Main] Quit.')
 
