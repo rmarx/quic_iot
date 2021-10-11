@@ -165,7 +165,7 @@ class Flow(object):
         else:
             return best_candidate_ts
 
-    def new_pkt(self, pkt, debug=False):
+    def new_pkt(self, pkt, debug=False, during_manual=False):
         ret = False
         # if TCP in pkt and len(pkt[TCP].payload) == 0:
         #     ret True
@@ -184,7 +184,10 @@ class Flow(object):
         if TCP in pkt:
             pkt_flag = int(pkt[TCP].flags) & MEANINGFUL_FLAG
 
-        ret = self.control_match(pkt, self.last_interval, pkt_len, pkt_flag, debug=debug)
+        count = True
+        if during_manual:
+            count = False
+        ret = self.control_match(pkt, self.last_interval, pkt_len, pkt_flag, count=count, debug=debug)
         if ret is True:
             return ret
 
@@ -371,7 +374,8 @@ class Device(object):
                 # if 6388 <= pkt_id[1] <= 6388: #or 5679 <= pkt_id[1] <= 5681:
                 #     debug = True
 
-                is_control = self.flow_dict[flow_id].new_pkt(pkt, debug=debug)
+                during_manual = self.queue_label == 2
+                is_control = self.flow_dict[flow_id].new_pkt(pkt, debug=debug, during_manual=during_manual)
                 is_burst = self.flow_dict[flow_id].is_burst()
                 
                 ret = self.process_queue_long(pkt, is_control, is_burst)
