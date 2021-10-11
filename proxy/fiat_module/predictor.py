@@ -444,7 +444,7 @@ class Device(object):
             self.queue_label = 0
         print('%s: analyze short %s -> current unpredictable queue is %d' % (
             self.name, 
-            str([d[1] for d in self.unexpected_queue_long_pktid[:5]]),
+            str([d for d in self.unexpected_queue_long_pktid[:5]]),
             self.queue_label
         ))
 
