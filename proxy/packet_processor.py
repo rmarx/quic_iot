@@ -105,7 +105,7 @@ class PacketProcessor(object):
     def allow_pkt(self, pkt):
         self.pkt_count += 1
 
-        packet_type = self._host_state.predictor.new_pkt(pkt, pkt_count)
+        packet_type = self._host_state.predictor.new_pkt(pkt, self.pkt_count)
         print('packet_type', packet_type)
         fiat_status = self._host_state.fiat_auth.get_status()
         print('fiat_status', fiat_status)
