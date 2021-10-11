@@ -85,30 +85,31 @@ class Flow(object):
         self.last_interval = 0
         self.last_confirmed_interval = 0
 
-    def control_match(self, pkt, interval, pkt_len, pkt_flag, count=True, debug=False):
+    def control_match(self, pkt, interval, pkt_len, pkt_flag, count=True, during_manual=False, debug=False):
         # count is to avoid double counting
         global PPP
 
         # time_allowance = max(interval * 0.1, utils.MAX_INTERVAL_ERROR )
-        for control_item in self.control_candidates:
-            # print('control_match', np.absolute(control_item[0] - interval), control_item[1] / pkt_len)
-            if (np.absolute(control_item[0] - interval) <= utils.MAX_INTERVAL_ERROR 
-                and 1-utils.MAX_PKTLEN_ERROR <= control_item[1] / pkt_len <= 1.0/(1-utils.MAX_PKTLEN_ERROR)
-                and control_item[2] == pkt_flag):
-                self.control_confirmed.append(control_item)
-                self.control_candidates.remove(control_item)
-                self.unexpected_pkt.pop(str(control_item))
-                control_item[0], control_item[1], control_item[3] = interval, pkt_len, float(pkt.time)
-                if count:
-                    self.control_count += 1
-                    self.unexpected_count -= 1
-                self.last_confirmed_pkt_ts[pkt_len] = float(pkt.time)
-                if debug:
-                    print('is control - new!', count, (interval, pkt_len, pkt_flag), control_item)
-                return True
-            elif (float(pkt.time) - control_item[3] > utils.MAX_REGULAR_INTERVAL):
-                # print('remove candidate', self.ip_src, self.ip_dst, self.proto, control_item)
-                self.control_candidates.remove(control_item)
+        if not during_manual:
+            for control_item in self.control_candidates:
+                # print('control_match', np.absolute(control_item[0] - interval), control_item[1] / pkt_len)
+                if (np.absolute(control_item[0] - interval) <= utils.MAX_INTERVAL_ERROR 
+                    and 1-utils.MAX_PKTLEN_ERROR <= control_item[1] / pkt_len <= 1.0/(1-utils.MAX_PKTLEN_ERROR)
+                    and control_item[2] == pkt_flag):
+                    self.control_confirmed.append(control_item)
+                    self.control_candidates.remove(control_item)
+                    self.unexpected_pkt.pop(str(control_item))
+                    control_item[0], control_item[1], control_item[3] = interval, pkt_len, float(pkt.time)
+                    if count:
+                        self.control_count += 1
+                        self.unexpected_count -= 1
+                    self.last_confirmed_pkt_ts[pkt_len] = float(pkt.time)
+                    if debug:
+                        print('is control - new!', count, (interval, pkt_len, pkt_flag), control_item)
+                    return True
+                elif (float(pkt.time) - control_item[3] > utils.MAX_REGULAR_INTERVAL):
+                    # print('remove candidate', self.ip_src, self.ip_dst, self.proto, control_item)
+                    self.control_candidates.remove(control_item)
 
         for control_item in self.control_confirmed:
             if (np.absolute(control_item[0] - interval) <= utils.MAX_INTERVAL_ERROR 
@@ -129,7 +130,7 @@ class Flow(object):
                 # print('remove confirmed', self.ip_src, self.ip_dst, self.proto, control_item)
                 self.control_confirmed.remove(control_item)
 
-        if count:
+        if count and (not during_manual):
             if interval <= utils.MAX_REGULAR_INTERVAL:
                 self.control_candidates.append([interval, pkt_len, int(pkt_flag), float(pkt.time)])
                 if debug:# or pkt_len==-230:
@@ -184,16 +185,15 @@ class Flow(object):
         if TCP in pkt:
             pkt_flag = int(pkt[TCP].flags) & MEANINGFUL_FLAG
 
-        count = True
         if during_manual:
-            count = False
-        ret = self.control_match(pkt, self.last_interval, pkt_len, pkt_flag, count=count, debug=debug)
+            print('during manual, do not register new candidates')
+        ret = self.control_match(pkt, self.last_interval, pkt_len, pkt_flag, during_manual=during_manual, debug=debug)
         if ret is True:
             return ret
 
         self.last_confirmed_interval = self.get_last_confirmed_ts(pkt_len, self.last_pkt_ts)
         if (self.last_confirmed_interval is not None) and (self.last_interval != self.last_confirmed_interval):
-            ret = self.control_match(pkt, self.last_confirmed_interval, pkt_len, pkt_flag, count=False, debug=debug)
+            ret = self.control_match(pkt, self.last_confirmed_interval, pkt_len, pkt_flag, count=False, during_manual=during_manual, debug=debug)
 
         if debug:
                 print('last_interval', pkt_len, self.last_pkt_ts, self.last_confirmed_interval, self.last_interval, self.last_interval != self.last_confirmed_interval)
