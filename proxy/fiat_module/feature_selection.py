@@ -19,7 +19,7 @@ from datetime import datetime
 
 import numpy as np
 
-import fiat_module.utils
+import fiat_module.utils as utils
 
 # TCP flags
 FIN = 0x01
