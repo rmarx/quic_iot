@@ -191,6 +191,18 @@ class StringGeneratorWebService(object):
 			data = read_json(cherrypy.request)
 			data = data['data'].split('\n')
 			print(data)
+			if len(data) > 2:
+				print('ignore')
+			else:
+				data = data[0].split(',')
+				ts = int(data[0])
+				app = data[1]
+				sensor = data[2]
+				if sensor == 'GYR' or sensor == 'ACC':
+					sensor_values = [float(d) for d in data[3:9]]
+					print('ts: %d, app: %s, sensor: %s, values: %s' % (ts, app, sensor, str(sensor_values)))
+				else:
+					print('sensor is %s, ignore' % (sensor))
 
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
