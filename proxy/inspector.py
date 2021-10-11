@@ -77,6 +77,7 @@ def start():
 
     fiat_proxy = FIATProxyService(fiat_auth)
     cherrypy.tree.mount(fiat_proxy, '/', config=CP_CONF)
+    cherrypy.tree.mount(fiat_proxy, '/fiatData', config=CP_CONF)
     cherrypy.config.update(fiat_server_config)
     cherrypy.engine.start()
     # cherrypy.quickstart(FIATProxyService(FIAT), '/', CP_CONF)

@@ -125,8 +125,8 @@ class FIATHandler:
             self.data[new_data['sensor']].append(new_data['sensor_values'])
             if self.data['ts'] == 0:
                 self.data['ts'] = new_data['ts']
-            if (len(self.data['UAC']) >= 1
-                and len(self.data['GYR'] >= 1
+            if (len(self.data['UAC']) >= 2
+                and len(self.data['GYR'] >= 2
                 and new_data['ts'] - self.data['ts'] > 0.1)): 
                 self.data = preprocess_data(self.data)
                 self.verify(self.data)
@@ -160,8 +160,8 @@ CP_CONF = {
 server_config={
     'server.socket_host': '0.0.0.0',
     'server.socket_port': 45679,
-    # 'server.ssl_module':'builtin',
-    # 'server.ssl_certificate':'certificate.pem',
+    'server.ssl_module':'builtin',
+    'server.ssl_certificate':'../web-app/certificate.pem',
 }
 
 def read_json(req): 
@@ -195,18 +195,41 @@ class FIATProxyService(object):
         ans = ''
 
         cherrypy.log("POST!!!")
-        body = read_json(cherrypy.request)
-        cherrypy.log(str(body))
-        
-        if len(body) > 0:
-            self.fiat_handler.new_data(body)
+        if 'fiatData' in cherrypy.url():
+            body = read_json(cherrypy.request)
+            cherrypy.log(str(body))
+            
+            if len(body) > 0:
+                data = read_json(cherrypy.request)
+                data = data['data'].split('\n')
+                print(data)
+                if len(data) > 2:
+                    print('ignore phone data')
+                else:
+                    data = data[0].split(',')
+                    ts = int(data[0])
+                    app = data[1]
+                    sensor = data[2]
+                    if sensor == 'GYR' or sensor == 'ACC':
+                        sensor_values = [float(d) for d in data[3:9]]
+                        new_data = {
+                            'ts': ts,
+                            'app': app,
+                            'sensor': sensor,
+                            'sensor_values': sensor_values
+                        }
+                        self.fiat_handler.new_data(new_data)
+                        print('ts: %d, app: %s, sensor: %s, values: %s' % (ts, app, sensor, str(sensor_values)))
+                    else:
+                        print('sensor is %s, ignore' % (sensor))
+                    
             if self.fiat_handler.status == True:
                 ans = 'OK\n'
                 cherrypy.response.status = 200
             else:
                 ans = 'Failed\n'
                 cherrypy.response.status = 404
-        return ans.encode('utf8')
+            return ans.encode('utf8')
 
         # url_splits = cherrypy.url().split('/')
         # print(url_splits)
