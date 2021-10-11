@@ -40,7 +40,7 @@ class HostState(object):
         self.pending_syn_scan_dict = {}  # device_id -> port_list
         self.status_text = None
         #self.device_whitelist = ['s3df95f7a87', 'sb48959b20c', 's4dbce800d0', 's3425f51919', 's30dac03a76']
-        self.device_whitelist = ['s3df95f7a87', 's3425f51919']
+        self.device_whitelist = ['s3df95f7a87', 's4dbce800d0']
         #self.device_whitelist = []
         self.has_consent = False
         self.byte_count = 0

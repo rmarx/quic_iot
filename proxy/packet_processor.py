@@ -81,7 +81,7 @@ class PacketProcessor(object):
 
         if (pkt[sc.Ether].dst == self._host_state.host_mac 
             and pkt[sc.IP].dst != self._host_state.host_ip):
-            print('received spoofed packet', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, protocol, sport, dport)
+            #print('received spoofed packet', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, protocol, sport, dport)
             pkt[sc.Ether].src = self._host_state.host_mac
             if pkt[sc.IP].dst in self._host_state.ip_mac_dict:
                 pkt[sc.Ether].dst = self._host_state.ip_mac_dict[pkt[sc.IP].dst]
@@ -103,6 +103,7 @@ class PacketProcessor(object):
             self._process_dns(pkt)
 
     def allow_pkt(self, pkt):
+        #return True
         self.pkt_count += 1
 
         packet_type = self._host_state.predictor.new_pkt(pkt, self.pkt_count)

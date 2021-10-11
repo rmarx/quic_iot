@@ -437,9 +437,9 @@ class Device(object):
 
         if self.clf:
             X = np.array(features).reshape(1, -1)
-            # print('X', X)
+            print('X', X)
             X_scaled = self.scalar.transform(X)
-            self.queue_label = self.clf.predict(X_scaled)
+            self.queue_label = self.clf.predict(X_scaled)[0]
         else:
             self.queue_label = 0
         print('%s: analyze short %s -> current unpredictable queue is %d' % (

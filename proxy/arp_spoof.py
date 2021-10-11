@@ -88,7 +88,7 @@ class ArpSpoof(object):
             for ip, mac in ip_mac_dict.items():
                 device_id = utils.get_device_id(mac, self._host_state)
                 if device_id not in self._host_state.device_whitelist:
-                    utils.log('[ARP Spoof] Ignore1:', device_id, ip, mac)
+                    #utils.log('[ARP Spoof] Ignore1:', device_id, ip, mac)
                     continue
                 whitelist_ip_mac.append((ip, mac))
             #print('arp spoof while 3')
@@ -103,7 +103,7 @@ class ArpSpoof(object):
                 victim_device_id = \
                     utils.get_device_id(victim_mac, self._host_state)
                 if victim_device_id not in self._host_state.device_whitelist:
-                    utils.log('[ARP Spoof] Ignore2: ', victim_device_id, victim_ip, victim_mac)
+                    #utils.log('[ARP Spoof] Ignore2: ', victim_device_id, victim_ip, victim_mac)
                     continue
 
                 if utils.TEST_OUI_LIST:
