@@ -423,7 +423,7 @@ class Device(object):
                 self.unexpected_queue_long_pktid = []
                 return ret
         
-        self.merge_pktid()
+        #self.merge_pktid()
         self.analyze_long()
 
         self.last_ts_unexpected_long = self.unexpected_queue_long[-1].time #self.last_ts
