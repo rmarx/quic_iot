@@ -188,7 +188,9 @@ class StringGeneratorWebService(object):
 
 		# command to be executed
 		if 'fiatData' in cherrypy.url():
-			print(read_json(cherrypy.request))
+			data = read_json(cherrypy.request)
+			data = data['data'].split('\n')
+			print(data)
 
 		# respond all good 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
