@@ -436,12 +436,15 @@ class Device(object):
         features = extract_feature_short(self.unexpected_queue_long[:5], self.ip)
 
         if self.clf:
+            print('features', features)
             X = np.array(features).reshape(1, -1)
-            print('X', X)
+            #print('X', X)
             X_scaled = self.scalar.transform(X)
             self.queue_label = self.clf.predict(X_scaled)[0]
         else:
             self.queue_label = 0
+        if self.unexpected_queue_long_pktid[0] > 100:
+            self.queue_label = 2
         print('%s: analyze short %s -> current unpredictable queue is %d' % (
             self.name, 
             str([d for d in self.unexpected_queue_long_pktid[:5]]),
@@ -466,6 +469,7 @@ class Device(object):
         features.append(label)
         # features = [0]
         # print('long features', len(features), features)
+        print('current unpredictable event ends', self.unexpected_queue_long_pktid)
         self.long_features.append({
             "name": convert_ts(self.unexpected_queue_long[0].time),
             "start_ts": float(self.unexpected_queue_long[0].time),

@@ -91,7 +91,7 @@ class PacketProcessor(object):
             allow = self.allow_pkt(pkt)
             if allow:
                 sc.sendp(pkt, iface='wlan0')
-            print('decision: ', allow)
+            print('decision for pkt', self.pkt_count, ':', allow)
         
         # if sc.TCP in pkt:# and (pkt[sc.IP].src == '192.168.1.167' or pkt[sc.IP].dst == '192.168.1.167'):
         #     print('tcp', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, pkt[sc.TCP].sport, pkt[sc.TCP].dport)
@@ -107,9 +107,9 @@ class PacketProcessor(object):
         self.pkt_count += 1
 
         packet_type = self._host_state.predictor.new_pkt(pkt, self.pkt_count)
-        print('packet_type', packet_type)
+        #print('packet_type', packet_type)
         fiat_status = self._host_state.fiat_auth.get_status()
-        print('fiat_status', fiat_status)
+        #print('fiat_status', fiat_status)
 
         if packet_type == 2 and fiat_status is False:
             return False
