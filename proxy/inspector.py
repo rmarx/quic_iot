@@ -29,7 +29,8 @@ from scapy.all import PcapReader
 
 import fiat_module.utils as fiat_utils
 from fiat_module.predictor import Predictor
-from fiat_module.fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
+from fiat_module.fiat_server import FIATHandler, FIATProxyService, CP_CONF
+from fiat_module.fiat_server import server_config as fiat_server_config
 
 
 
@@ -77,7 +78,7 @@ def start():
     fiat_proxy = FIATProxyService(fiat_auth)
     cherrypy.tree.mount(fiat_proxy, '/', config=CP_CONF)
     cherrypy.engine.start()
-    cherrypy.config.update(server_config)
+    cherrypy.config.update(fiat_server_config)
     # cherrypy.quickstart(FIATProxyService(FIAT), '/', CP_CONF)
 
     # devices = json.load(open(device_file, 'r'))
