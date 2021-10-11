@@ -22,12 +22,12 @@ def Amp(a, b, c):
     return [np.sqrt(a[i]*a[i] + b[i]*b[i] + c[i]*c[i]) for i in range(len(a))]
 
 def preprocess_data(data):
-    uac_x = [da['UAC'][0] for da in data]
-    uac_y = [da['UAC'][1] for da in data]
-    uac_z = [da['UAC'][2] for da in data]
-    gyr_x = [da['GYR'][0] for da in data]
-    gyr_y = [da['GYR'][1] for da in data]
-    gyr_z = [da['GYR'][2] for da in data]
+    uac_x = [da[0] for da in data['UAC']]
+    uac_y = [da[1] for da in data['UAC']]
+    uac_z = [da[2] for da in data['UAC']]
+    gyr_x = [da[0] for da in data['GYR']]
+    gyr_y = [da[1] for da in data['GYR']]
+    gyr_z = [da[2] for da in data['GYR']]
 
     # TODO: modify this to real features
     results = [
@@ -87,6 +87,12 @@ class FIATHandler:
     def __init__(self, mode, zksense_model='../../zkSENSE/ML/decisiontree7.joblib'):
         self.data = []
         self.mode = mode
+        if self.mode == 1:
+            self.data = {
+                'UAC': [],
+                'GYR': [],
+                'ts': 0
+            }
         self.clf = joblib.load(zksense_model)
 
         self.status = False # whether it is authenticated
@@ -100,7 +106,7 @@ class FIATHandler:
         self.update_status()
         return self.status
 
-    def new_data(self, data):
+    def new_data(self, new_data):
         # example data input:
         # MODE 0: 
         #   [0.1] * 48
@@ -110,17 +116,25 @@ class FIATHandler:
         #       'GYR': [0.1] * 6,
         #       'ts': 1633581551.092685,
         #   }
-        print('FIATHandler.new_data', self.mode, len(data))
-        self.data.append(data)
+        print('FIATHandler.new_data', self.mode, len(new_data))
         if self.mode == 0:
-            if len(self.data) >= 1:
-                self.verify(self.data)
-                self.data = []
+            self.data.append(new_data)
+            self.verify(self.new_data)
+            self.data = []
         elif self.mode == 1:
-            if len(self.data) >= 3:  # 250Hz * 0.3s
+            self.data[new_data['sensor']].append(new_data['sensor_values'])
+            if self.data['ts'] == 0:
+                self.data['ts'] = new_data['ts']
+            if (len(self.data['UAC']) >= 1
+                and len(self.data['GYR'] >= 1
+                and new_data['ts'] - self.data['ts'] > 0.1)): 
                 self.data = preprocess_data(self.data)
                 self.verify(self.data)
-                self.data = []
+                self.data = {
+                    'UAC': [],
+                    'GYR': [],
+                    'ts': 0
+                }
         
     def verify(self, X):
         ret = self.clf.predict(X)

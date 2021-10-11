@@ -12,9 +12,9 @@ import logging
 from scapy.all import PcapReader
 
 
-import utils 
-from predictor import Predictor
-from fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
+import fiat_module.utils 
+from fiat_module.predictor import Predictor
+from fiat_module.fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
 
 
 # ------------------------------------- FIAT Handler ------------------------------------ #
@@ -22,7 +22,7 @@ from fiat_server import FIATHandler, FIATProxyService, CP_CONF, server_config
 # mode:
 # 0 -> pre-processing data at Android phone
 # 1 -> receiving raw data from phone and processing mean and divation here
-FIAT_MODE = 0
+FIAT_MODE = 1
 FIAT = FIATHandler(mode=FIAT_MODE, zksense_model='../../zkSENSE/ML/decisiontree7.joblib')
 
 # -------------------------------------- Predictor ------------------------------------- #

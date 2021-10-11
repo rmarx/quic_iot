@@ -21,8 +21,8 @@ from string import digits
 from datetime import datetime
 
 # from utils import MAX_INTERVAL_ERROR, MAX_PKTLEN_ERROR, PROCESSING_INTERVAL_LONG, PROCESSING_INTERVAL_SHORT, SHORT_PKT_THRES 
-import utils
-from feature_selection import extract_feature_short, extract_feature_long
+import fiat_module.utils
+from fiat_module.feature_selection import extract_feature_short, extract_feature_long
 
 import numpy as np
 import joblib
