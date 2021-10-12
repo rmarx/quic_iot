@@ -447,7 +447,7 @@ class Device(object):
             self.queue_label = self.clf.predict(X_scaled)[0]
         else:
             self.queue_label = 0
-        if self.unexpected_queue_long_pktid[0] > 100:
+        if self.unexpected_queue_long_pktid[0] > 1000:
             self.queue_label = 2
         print('%s: analyze short %s -> current unpredictable queue is %d' % (
             self.name, 

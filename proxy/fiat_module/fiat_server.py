@@ -5,6 +5,7 @@ from cherrypy.lib.static import serve_file
 import logging
 import time
 import numpy as np
+import simplejson
 
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +82,7 @@ def preprocess_data(data):
         np.mean(gyr_x),
         np.mean(Amp(gyr_x, gyr_x, gyr_x)),
     ]
-    return results
+    return [results]
 
 class FIATHandler:
     def __init__(self, mode, zksense_model='../../zkSENSE/ML/decisiontree7.joblib'):
@@ -125,10 +126,13 @@ class FIATHandler:
             self.data[new_data['sensor']].append(new_data['sensor_values'])
             if self.data['ts'] == 0:
                 self.data['ts'] = new_data['ts']
+            #print('data000', self.data)
             if (len(self.data['UAC']) >= 2
-                and len(self.data['GYR'] >= 2
-                and new_data['ts'] - self.data['ts'] > 0.1)): 
+                and len(self.data['GYR']) >= 2
+                and (new_data['ts'] - self.data['ts'] > 0.1)): 
+                #print('data111', self.data)
                 self.data = preprocess_data(self.data)
+                #print('data222', self.data)
                 self.verify(self.data)
                 self.data = {
                     'UAC': [],
@@ -137,7 +141,9 @@ class FIATHandler:
                 }
         
     def verify(self, X):
-        ret = self.clf.predict(X)
+        print('X', X)
+        #return
+        ret = self.clf.predict(X)[0]
         print('FIATHandler.Verify!', ret, '\n\n')
         # TODO: check the meaning of the predict return
         if ret == 0:
@@ -154,12 +160,17 @@ CP_CONF = {
         'tools.response_headers.on': True,
         # 'tools.staticdir.on': True,
         # 'tools.staticdir.dir': os.path.abspath(os.getcwd())
+    },
+    '/fiatData': {
+        'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+        'tools.sessions.on': True,
+        'tools.response_headers.on': True,
     }
 }
 
 server_config={
     'server.socket_host': '0.0.0.0',
-    'server.socket_port': 45679,
+    'server.socket_port': 8082,
     'server.ssl_module':'builtin',
     'server.ssl_certificate':'../web-app/certificate.pem',
 }
@@ -167,7 +178,8 @@ server_config={
 def read_json(req): 
 	cl = req.headers['Content-Length']
 	rawbody = req.body.read(int(cl))
-	body = json.loads(rawbody)
+	#print('rawbody', rawbody)
+	body = simplejson.loads(rawbody)
 	#print(body)
 	return body 
 
@@ -176,6 +188,7 @@ def read_json(req):
 class FIATProxyService(object):
     def __init__(self, fiat_handler):
         self.fiat_handler = fiat_handler
+        print('Proxy iniated')
 
     #@cherrypy.tools.accept(media='text/plain')
     def GET(self, var=None, **params):
@@ -194,42 +207,38 @@ class FIATProxyService(object):
         result = []
         ans = ''
 
-        cherrypy.log("POST!!!")
+        #cherrypy.log("POST!!!")
         if 'fiatData' in cherrypy.url():
-            body = read_json(cherrypy.request)
-            cherrypy.log(str(body))
-            
-            if len(body) > 0:
-                data = read_json(cherrypy.request)
-                data = data['data'].split('\n')
-                print(data)
-                if len(data) > 2:
-                    print('ignore phone data')
-                else:
-                    data = data[0].split(',')
-                    ts = int(data[0])
-                    app = data[1]
-                    sensor = data[2]
-                    if sensor == 'GYR' or sensor == 'ACC':
-                        sensor_values = [float(d) for d in data[3:9]]
-                        new_data = {
-                            'ts': ts,
-                            'app': app,
-                            'sensor': sensor,
-                            'sensor_values': sensor_values
-                        }
-                        self.fiat_handler.new_data(new_data)
-                        print('ts: %d, app: %s, sensor: %s, values: %s' % (ts, app, sensor, str(sensor_values)))
-                    else:
-                        print('sensor is %s, ignore' % (sensor))
-                    
-            if self.fiat_handler.status == True:
-                ans = 'OK\n'
-                cherrypy.response.status = 200
+            data = read_json(cherrypy.request)
+            #print(data)
+            data = data['data'].split('\n')
+            if len(data) > 2:
+                print('ignore non-app data')
             else:
-                ans = 'Failed\n'
-                cherrypy.response.status = 404
-            return ans.encode('utf8')
+                data = data[0].split(',')
+                ts = int(data[0])
+                app = data[1]
+                sensor = data[2]
+                if sensor == 'GYR' or sensor == 'UAC':
+                    sensor_values = [float(d) for d in data[3:9]]
+                    new_data = {
+                        'ts': ts,
+                        'app': app,
+                         'sensor': sensor,
+                        'sensor_values': sensor_values
+                    }
+                    self.fiat_handler.new_data(new_data)
+                    #print('ts: %d, app: %s, sensor: %s, values: %s' % (ts, app, sensor, str(sensor_values)))
+                else:
+                    print('sensor is %s, ignore' % (sensor))
+                    
+        if self.fiat_handler.status == True:
+            ans = 'OK\n'
+            cherrypy.response.status = 200
+        else:
+            ans = 'Failed\n'
+            cherrypy.response.status = 404
+        return ans.encode('utf8')
 
         # url_splits = cherrypy.url().split('/')
         # print(url_splits)

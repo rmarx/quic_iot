@@ -66,7 +66,7 @@ def start():
     # mode:
     # 0 -> pre-processing data at Android phone
     # 1 -> receiving raw data from phone and processing mean and divation here
-    FIAT_MODE = 0
+    FIAT_MODE = 1
     fiat_auth = FIATHandler(mode=FIAT_MODE, zksense_model='../../zkSENSE/ML/decisiontree7.joblib')
 
     # -------------------------------------- Predictor ------------------------------------- #

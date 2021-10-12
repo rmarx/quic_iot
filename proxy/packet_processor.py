@@ -61,8 +61,8 @@ class PacketProcessor(object):
         #         return
 
         # Ignore traffic to and from this host's IP
-        # if self._host_state.host_ip in (pkt[sc.IP].src, pkt[sc.IP].dst):
-        #     return
+        if self._host_state.host_ip in (pkt[sc.IP].src, pkt[sc.IP].dst):
+            return
 
         # Commented out the following. We want to see traffic between device and gateway.
         # # Ignore traffic to and from the gateway's IP
@@ -91,7 +91,7 @@ class PacketProcessor(object):
             allow = self.allow_pkt(pkt)
             if allow:
                 sc.sendp(pkt, iface='wlan0')
-            print('decision for pkt', self.pkt_count, ':', allow)
+            utils.log('decision for pkt', self.pkt_count, ':', allow)
         
         # if sc.TCP in pkt:# and (pkt[sc.IP].src == '192.168.1.167' or pkt[sc.IP].dst == '192.168.1.167'):
         #     print('tcp', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, pkt[sc.TCP].sport, pkt[sc.TCP].dport)
