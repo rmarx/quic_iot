@@ -370,6 +370,9 @@ class Device(object):
                 proto = flow_id.split(',')[-1]
                 self.flow_dict[flow_id] = self.flow_dict.get(flow_id, Flow(pkt[IP].src, pkt[IP].dst, self.ip, proto))
                 
+                if simple_rule(pkt):
+                    return self.queue_label
+
                 debug = False
                 # if 6388 <= pkt_id[1] <= 6388: #or 5679 <= pkt_id[1] <= 5681:
                 #     debug = True
@@ -384,6 +387,22 @@ class Device(object):
                     IP_filter.append(flow_id)
                     
         return ret
+
+    def simple_rule(self, pkt):
+        if self.name == "SP10":
+            if TCP in pkt and len(pkt) == 267:
+                print('SP10 manual!')
+                self.queue_label = 2
+            else:
+                self.queue_label = 0
+        elif self.name == 'WP3':
+            if TCP in pkt and len(pkt) == 235:
+                print('WP3 manual!')
+                self.queue_label = 2
+            else:
+                self.queue_label = 0
+        else:
+            return False
 
     def merge_pktid(self):
         # print('before merge', self.unexpected_queue_long_pktid)
@@ -630,6 +649,13 @@ if __name__ == "__main__":
         {
             "name": "Wyze", "mac": "2c:aa:8e:15:da:5b", "ip": "192.168.5.15", 
             "clf": "../models/WyzeCam.joblib"
+        },
+        {
+            "name": "EchoDot", "mac": "6a:6f:ad:75:45:d9", "ip": "192.168.5.19", 
+            "clf": "../models/EchoDot.joblib"
+        },
+        {
+            "name": "SP10", "mac": "18:69:d8:5b:be:7c", "ip": "192.168.5.6",
         }
     ]
     # try:

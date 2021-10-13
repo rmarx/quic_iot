@@ -1,0 +1,68 @@
+WyzeCam
+N=82
+Truth \ Predict 0  2 
+0               62 0
+2               0  40
+
+
+HomeMini
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+EchoDot 
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+SP10
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+GoogleHome
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+Nest-E
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+EchoDot3
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+E4
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+Blink 
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
+
+
+WP3
+N=5
+Truth \ Predict 0  2 
+0               0  0
+2               0  0
