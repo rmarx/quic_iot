@@ -44,22 +44,22 @@ class ArpSpoof(object):
             if not self._host_state.is_inspecting():
                 time.sleep(2)
                 continue
-
+            
             time.sleep(1)
 
             with self._lock:
                 if not self._active:
                     return
-
+            
             with self._host_state.lock:
                 if not self._host_state.has_consent:
                     utils.log('[ARP Spoof] No consent; no spoofing.')
                     continue
-
+            
             # Get ARP cache
             ip_mac_dict = self._host_state.get_ip_mac_dict_copy()
             gateway_ip = self._host_state.gateway_ip
-            #print('ip_mac_dict', ip_mac_dict)
+            #print('ip_mac_dict', ip_mac_dict, self._host_state.ip_mac_dict)
             #print('gateway_ip', gateway_ip)
 
             if str(ip_mac_dict) != str(prev_ip_mac_dict):
@@ -74,7 +74,8 @@ class ArpSpoof(object):
             # Get gateway MAC addr
             try:
                 gateway_mac = ip_mac_dict[gateway_ip]
-            except KeyError:
+            except KeyError as e:
+                print('arp while error', e)
                 continue
 
             whitelist_ip_mac = []
@@ -141,6 +142,8 @@ class ArpSpoof(object):
             if not spoof_arp:
                 dest_arp.hwsrc = victim_mac
                 utils.log('[Arp Spoof] Restoring', victim_ip, '->', dest_ip)
+            #else:
+            #    utils.log('[Arp Spoof]', victim_ip, '->', dest_ip)
 
             victim_arp = sc.ARP()
             victim_arp.op = 2
@@ -150,6 +153,8 @@ class ArpSpoof(object):
             if not spoof_arp:
                 victim_arp.hwsrc = dest_mac
                 utils.log('[Arp Spoof] Restoring', dest_ip, '->', victim_ip)
+            #else:
+            #    utils.log('[Arp Spoof]', dest_ip, '->', victim_ip)
 
             sc.send(victim_arp, iface="wlan0", verbose=0)
             sc.send(dest_arp, iface="wlan0", verbose=0)

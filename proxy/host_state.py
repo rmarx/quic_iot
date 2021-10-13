@@ -29,7 +29,8 @@ class HostState(object):
 
         # The following objects might be modified concurrently.
         self.lock = threading.Lock()
-        self.ip_mac_dict = {}  # IP -> MAC
+        #self.ip_mac_dict = {}  # IP -> MAC
+        self.ip_mac_dict = {'192.168.5.1': 'b8:27:eb:8e:74:ef', '192.168.5.6': '18:69:d8:5b:be:7c', '192.168.5.14': '30:fd:38:7b:62:51', '192.168.5.15': '2c:aa:8e:15:da:5b', '192.168.5.19': '6a:6f:ad:75:45:d9'}
         self.pending_dhcp_dict = {}  # device_id -> hostname
         self.pending_resolver_dict = {}  # device_id -> resolver_ip
         self.pending_dns_dict = {}  # (device_id, domain) -> ip_set
@@ -92,6 +93,7 @@ class HostState(object):
 
                 with self.lock:
                     self.ip_mac_dict = {}
+                    self.ip_mac_dict = {'192.168.5.1': 'b8:27:eb:8e:74:ef', '192.168.5.6': '18:69:d8:5b:be:7c', '192.168.5.14': '30:fd:38:7b:62:51', '192.168.5.15': '2c:aa:8e:15:da:5b', '192.168.5.19': '6a:6f:ad:75:45:d9'}
 
                 prev_gateway_ip = self.gateway_ip
                 prev_host_ip = self.host_ip

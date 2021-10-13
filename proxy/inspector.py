@@ -135,8 +135,8 @@ def start():
     #syn_scan_thread.start()
 
     # Continuously gather SSDP data
-    netdisco_thread = NetdiscoWrapper(state)
-    netdisco_thread.start()
+    #netdisco_thread = NetdiscoWrapper(state)
+    #netdisco_thread.start()
 
     # Continuously capture packets
     packet_capture_thread = PacketCapture(state)

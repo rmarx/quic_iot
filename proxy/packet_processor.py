@@ -91,7 +91,8 @@ class PacketProcessor(object):
             allow = self.allow_pkt(pkt)
             if allow:
                 sc.sendp(pkt, iface='wlan0')
-            utils.log('decision for pkt', self.pkt_count, ':', allow)
+            if self.pkt_count % 20 == 0:
+                utils.log('decision for pkt', self.pkt_count, ':', allow)
         
         # if sc.TCP in pkt:# and (pkt[sc.IP].src == '192.168.1.167' or pkt[sc.IP].dst == '192.168.1.167'):
         #     print('tcp', len(pkt), pkt[sc.IP].src, pkt[sc.IP].dst, pkt[sc.TCP].sport, pkt[sc.TCP].dport)

@@ -170,7 +170,7 @@ CP_CONF = {
 
 server_config={
     'server.socket_host': '0.0.0.0',
-    'server.socket_port': 8082,
+    'server.socket_port': 8083,
     'server.ssl_module':'builtin',
     'server.ssl_certificate':'../web-app/certificate.pem',
 }
