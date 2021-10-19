@@ -407,6 +407,13 @@ class Device(object):
             else:
                 self.queue_label = 0
             return True
+        elif self.name == 'ThermostatLR':
+            if TCP in pkt and len(pkt) == 410-14:
+                print('WP3 manual!')
+                self.queue_label = 2
+            else:
+                self.queue_label = 0
+            return True
         else:
             return False
 
@@ -676,6 +683,27 @@ if __name__ == "__main__":
         },
         {
             "name": "SP10", "mac": "18:69:d8:5b:be:7c", "ip": "192.168.5.6",
+        },
+        {
+            "name": "Blink", "mac": "90:a8:22:07:8a:f6", "ip": "192.168.50.74", 
+            "clf": "../models/Blink.joblib"
+        },
+        {
+            "name": "WP3", "mac": "dc:4f:22:b3:fa:77", "ip": "192.168.50.232",
+        },
+        {
+            "name": "Alexa", "mac": "08:84:9d:e7:c4:32", "ip": "192.168.50.85", 
+            "clf": "../models/EchoDot.joblib"
+        },
+        {
+            "name": "Vacuum", "mac": "54:48:e6:96:53:50", "ip": "192.168.50.234",
+        },
+        {
+            "name": "GoogleHome", "mac": "f4:f5:d8:d9:43:4c", "ip": "192.168.1.254",
+            "clf": "../models/HomeMini.joblib"
+        },
+        {
+            "name": "ThermostatLR", "mac": "64:16:66:2c:45:11", "ip": "192.168.1.176",
         }
     ]
     # try:
