@@ -535,6 +535,7 @@ if __name__ == "__main__":
             'ts': time.time()
         }
         data = json.dumps(data)
+    print(data)
 
     if uvloop is not None:
         uvloop.install()
